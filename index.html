@@ -13,48 +13,56 @@
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: system-ui, -apple-system, sans-serif; }
   body { margin: 0; background: #f5f5f7; color: #1c1c1e; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-  .app { max-width: 500px; margin: 0 auto; width: 100%; height: 100%; background: #ffffff; display: flex; flex-direction: column; overflow: hidden; position: relative; }
   
-  /* 页面基础 */
+  .app { max-width: 500px; margin: 0 auto; width: 100%; height: 100%; background: #ffffff; display: flex; flex-direction: column; position: relative; }
+  
+  /* 页面切换逻辑 */
   .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; transition: transform 0.3s ease; overflow: hidden; display: flex; flex-direction: column; visibility: hidden; z-index: 1; }
   .active-page { transform: translateX(0) !important; z-index: 5; visibility: visible; }
   .page-main { transform: translateX(0); visibility: visible; z-index: 2; }
 
-  /* 顶部导航 */
+  /* 顶部栏 */
   .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: white; border-bottom: 1px solid #efeff4; flex-shrink: 0; }
   .nav-btn { background: none; border: none; font-size: 14px; color: #ff9f0a; font-weight: 600; cursor: pointer; padding: 6px; }
-  .date-picker-btn { background: #f2f2f6; padding: 6px 12px; border-radius: 30px; font-size: 13px; color: #ff9f0a; border: none; font-weight: 500; cursor: pointer; }
+  .date-picker-btn { background: #f2f2f6; padding: 6px 14px; border-radius: 30px; font-size: 13px; color: #ff9f0a; border: none; font-weight: 500; cursor: pointer; }
 
-  /* 主内容区 */
-  .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 8px 16px 0; }
-  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-  .item { display: flex; flex-direction: column; align-items: center; background: #f9f9fb; padding: 8px 0; border-radius: 14px; border: 1px solid #e9e9ef; }
+  /* 主内容区 - 彻底干掉大空隙的关键 */
+  .main-content { 
+    flex: 0 1 auto; /* 不再强制撑满 */
+    display: flex; 
+    flex-direction: column; 
+    padding: 10px 16px 0;
+    overflow-y: auto;
+  }
+  
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+  .item { display: flex; flex-direction: column; align-items: center; background: #f9f9fb; padding: 6px 0; border-radius: 12px; border: 1px solid #e9e9ef; }
   .item.active { background: #fff2e6; border-color: #ff9f0a; }
-  .icon { font-size: 22px; } .name { font-size: 11px; margin-top: 2px; color: #3a3a3c; }
+  .icon { font-size: 20px; } 
+  .name { font-size: 10px; margin-top: 2px; color: #3a3a3c; }
   
   .purpose-input { width: 100%; background: #f9f9fb; border: 1px solid #e9e9ef; border-radius: 12px; padding: 10px 16px; font-size: 15px; outline: none; margin-bottom: 8px; }
   
-  /* 金额区 - 极简紧凑 */
-  .amount-display { text-align: right; padding: 0 4px 4px; border-bottom: 2px solid #ff9f0a; margin-bottom: 2px; }
-  .amount-val { font-size: 42px; font-weight: 700; font-family: 'Arial Narrow', monospace; line-height: 1; }
+  /* 金额区 - 紧贴键盘 */
+  .amount-display { text-align: right; padding: 4px 0; border-bottom: 2px solid #ff9f0a; margin-bottom: 4px; flex-shrink: 0; }
+  .amount-val { font-size: 40px; font-weight: 700; font-family: 'Arial Narrow', monospace; line-height: 1.1; }
 
-  /* 键盘 - 无缝衔接 */
-  .keyboard { background: #ffffff; padding: 8px 16px 12px; border-top: 1px solid #f2f2f6; }
+  /* 键盘区 */
+  .keyboard-wrap { margin-top: auto; background: #ffffff; padding: 4px 16px 8px; border-top: 1px solid #f2f2f6; flex-shrink: 0; }
   .key-row { display: flex; gap: 8px; margin-bottom: 8px; }
-  .key { flex: 1; background: #f2f2f6; border: none; border-radius: 14px; padding: 14px 0; font-size: 22px; font-weight: 600; cursor: pointer; }
+  .key { flex: 1; background: #f2f2f6; border: none; border-radius: 12px; padding: 14px 0; font-size: 22px; font-weight: 600; cursor: pointer; }
   .key-done { background: #ff9f0a; color: white; }
 
-  /* 版本号 */
-  .version-tag { text-align: center; font-size: 10px; color: #d1d1d6; padding-bottom: 8px; font-family: monospace; background: #ffffff; flex-shrink: 0; }
+  /* 版本号 - 绝对底部 */
+  .version-tag { text-align: center; font-size: 10px; color: #d1d1d6; padding: 4px 0; font-family: monospace; background: #ffffff; flex-shrink: 0; }
 
-  /* 通用组件 */
-  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: 0.2s; z-index: 10000; pointer-events: none; }
+  /* 通用 */
+  .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: 0.2s; z-index: 10000; pointer-events: none; }
   .toast.show { opacity: 1; }
   .list-container { flex: 1; overflow-y: auto; padding: 16px; }
   .record-card { background: #f9f9fb; border-radius: 16px; padding: 12px; margin-bottom: 12px; border: 1px solid #e9e9ef; }
   .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
   .modal-content { background: white; width: 85%; border-radius: 24px; padding: 24px; text-align: center; }
-  .btn-block { width: 100%; padding: 14px; margin-top: 10px; border-radius: 15px; border: none; font-size: 16px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -62,11 +70,11 @@
 <div class="app">
   <div id="pageMain" class="page page-main active-page">
     <div class="top-bar">
-      <div id="leftBtns">
+      <div>
         <button class="nav-btn" onclick="openLedger()">📋 流水</button>
         <button class="nav-btn" onclick="openSummary()">📊 汇总</button>
       </div>
-      <div id="rightBtns">
+      <div>
         <button class="nav-btn" onclick="downloadCSV()">💾 导出</button>
         <button class="nav-btn" onclick="importBackup()">📂 导入</button>
       </div>
@@ -80,7 +88,7 @@
       <div class="amount-display"><span class="amount-val" id="amtDisp">0.00</span></div>
     </div>
 
-    <div class="keyboard">
+    <div class="keyboard-wrap">
       <div class="key-row">
         <button class="key" onclick="press('1')">1</button><button class="key" onclick="press('2')">2</button><button class="key" onclick="press('3')">3</button><button class="key" style="background:#e5e5ea" onclick="press('del')">⌫</button>
       </div>
@@ -94,7 +102,6 @@
         <button class="key" style="flex:2.2" onclick="press('0')">0</button><button class="key" onclick="press('.')">.</button>
       </div>
     </div>
-    
     <div class="version-tag">v2.2</div>
   </div>
 
@@ -104,18 +111,8 @@
   </div>
 
   <div id="pageSummary" class="page">
-    <div class="top-bar"><button class="nav-btn" onclick="closePage()">← 返回</button><b>分析汇总</b><div style="width:40px"></div></div>
+    <div class="top-bar"><button class="nav-btn" onclick="closePage()">← 返回</button><b>汇总统计</b><div style="width:40px"></div></div>
     <div id="summaryContent" class="list-container"></div>
-  </div>
-
-  <div id="editModal" class="modal">
-    <div class="modal-content">
-      <input type="number" id="editAmt" class="purpose-input" style="text-align:center; font-size:24px">
-      <input type="text" id="editDesc" class="purpose-input">
-      <button class="btn-block key-done" onclick="confirmUpdate()">保存</button>
-      <button class="btn-block" style="background:#ff3b30; color:white;" onclick="confirmDelete()">删除</button>
-      <button class="nav-btn" style="margin-top:10px" onclick="closeModal()">取消</button>
-    </div>
   </div>
 
   <div id="toast" class="toast"></div>
@@ -128,7 +125,7 @@
   const ACCOUNTS = ["现金","信用卡","借记卡","微信"];
   const ACC_ICONS = ["💵","💳","🏦","💬"];
 
-  // 1. 强制获取本地当天日期字符串 (不使用 ISOString 以免 8 小时时差)
+  // 1. 获取正确本地时间（防止4月7日回滚）
   function getLocalDate() {
     const n = new Date();
     return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
@@ -137,13 +134,13 @@
   let db, records = [], curAmt = "0", curCat = "餐饮", curAcc = "现金", curDateStr = getLocalDate();
 
   const request = indexedDB.open("LedgerSystem", 4);
-  request.onsuccess = e => { db = e.target.result; loadRecords(); };
+  request.onsuccess = e => { db = e.target.result; load(); };
   request.onupgradeneeded = e => {
     let d = e.target.result;
     if(!d.objectStoreNames.contains("records")) d.createObjectStore("records", {keyPath: "id"});
   };
 
-  function loadRecords() {
+  function load() {
     db.transaction("records").objectStore("records").getAll().onsuccess = e => {
       records = e.target.result.sort((a,b) => b.id - a.id);
       render();
@@ -172,68 +169,69 @@
   }
 
   function save() {
-    if(parseFloat(curAmt) <= 0) return showToast("金额无效");
+    if(parseFloat(curAmt) <= 0) return showToast("请输入有效金额");
     const r = { id: Date.now(), amt: parseFloat(curAmt), cat: curCat, acc: curAcc, desc: document.getElementById('descInput').value || "未备注", date: curDateStr };
     db.transaction("records", "readwrite").objectStore("records").add(r).onsuccess = () => {
       records.unshift(r); curAmt = "0"; document.getElementById('descInput').value = "";
       render(); showToast("已记账");
-      saveSandboxBackup(); 
+      localStorage.setItem('ledger_backup', JSON.stringify(records));
     };
   }
 
+  function downloadCSV() {
+    if(!records.length) return showToast("暂无数据");
+    let csv = "\ufeff日期,分类,账户,说明,金额\n" + records.map(r => `${r.date},${r.cat},${r.acc},${r.desc},${r.amt}`).join("\n");
+    const blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `账本_${getLocalDate()}.csv`; a.click();
+    showToast("CSV 已下载");
+  }
+
+  function importBackup() {
+    const data = localStorage.getItem('ledger_backup');
+    if(!data) return showToast("未找到备份");
+    if(confirm("恢复历史记录？")) {
+      const tx = db.transaction("records", "readwrite");
+      const store = tx.objectStore("records");
+      store.clear();
+      JSON.parse(data).forEach(r => store.add(r));
+      tx.oncomplete = () => location.reload();
+    }
+  }
+
   function openLedger() {
-    const cont = document.getElementById('ledgerContent');
-    cont.innerHTML = records.map(r => `
-      <div class="record-card" onclick="openEdit(${r.id})">
+    document.getElementById('ledgerContent').innerHTML = records.map(r => `
+      <div class="record-card">
         <div style="font-size:11px; color:#8e8e93">${r.date}</div>
         <div style="display:flex; justify-content:space-between; margin-top:4px">
-          <span><b>${r.cat}</b> <small>${r.acc}</small></span>
+          <span><b>${r.cat}</b> (${r.acc})</span>
           <b style="color:#ff3b30">¥${r.amt.toFixed(2)}</b>
         </div>
       </div>`).join('');
     document.getElementById('pageLedger').classList.add('active-page');
   }
 
-  function downloadCSV() {
-    if(!records.length) return showToast("暂无数据");
-    let content = "\ufeff日期,分类,账户,说明,金额\n" + records.map(r => `${r.date},${r.cat},${r.acc},${r.desc},${r.amt}`).join("\n");
-    const blob = new Blob([content], {type: "text/csv;charset=utf-8"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `账本_${getLocalDate()}.csv`; a.click();
-    showToast("CSV 已下载");
-  }
-
-  function saveSandboxBackup() {
-    localStorage.setItem('ledger_backup', JSON.stringify(records));
-  }
-
-  function importBackup() {
-    const data = localStorage.getItem('ledger_backup');
-    if(!data) return showToast("本地无备份");
-    if(confirm("确定恢复本地缓存中的数据吗？")) {
-      const parsed = JSON.parse(data);
-      const tx = db.transaction("records", "readwrite");
-      const store = tx.objectStore("records");
-      store.clear();
-      parsed.forEach(r => store.add(r));
-      tx.oncomplete = () => location.reload();
-    }
+  function openSummary() {
+    const map = {};
+    records.forEach(r => { map[r.cat] = (map[r.cat] || 0) + r.amt; });
+    document.getElementById('summaryContent').innerHTML = Object.keys(map).map(k => `
+      <div class="record-card" style="display:flex; justify-content:space-between">
+        <span>${k}</span><b>¥${map[k].toFixed(2)}</b>
+      </div>`).join('') || '<div style="text-align:center;color:#8e8e93;margin-top:20px">暂无汇总</div>';
+    document.getElementById('pageSummary').classList.add('active-page');
   }
 
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.innerText = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 1000);
+    setTimeout(() => t.classList.remove('show'), 1200);
   }
   function closePage() { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); }
-  function openSummary() { showToast("汇总功能已在 v2.2 优化中"); }
   
-  // 日期逻辑
   const dInp = document.getElementById('dateInput');
   document.getElementById('dateBtn').onclick = () => dInp.showPicker();
   dInp.onchange = e => { if(e.target.value) { curDateStr = e.target.value; render(); } };
-  dInp.value = curDateStr;
 
   render();
 </script>
