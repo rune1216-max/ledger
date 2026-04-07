@@ -110,12 +110,16 @@
     color: #ff9f0a;
     font-weight: 500;
   }
-  .backup-btn {
+  .import-btn {
     background: none;
     border: none;
     font-size: 18px;
     cursor: pointer;
     padding: 6px 10px;
+    color: #ff9f0a;
+  }
+  .import-file-input {
+    display: none;
   }
 
   /* 主内容区 */
@@ -506,7 +510,8 @@
       </div>
       <div>
         <button class="date-picker" id="dateTriggerBtn">📅 今天</button>
-        <button class="backup-btn" id="manualBackupBtn" title="备份">💾</button>
+        <button class="import-btn" id="importBtn" title="导入备份">📂</button>
+        <input type="file" id="importFileInput" class="import-file-input" accept=".json">
       </div>
     </div>
 
@@ -688,7 +693,6 @@
     const tx = db.transaction("records", "readonly");
     const req = tx.objectStore("records").getAll();
     req.onsuccess = () => {
-      // 按时间倒序（最新在上）
       records = req.result.sort((a,b) => b.date.localeCompare(a.date));
       renderLedgerList();
     };
@@ -927,7 +931,6 @@
   function performAutoBackup() {
     if (!records.length) return;
     try {
-      // 备份时按时间正序（旧的在前面）
       const sortedForBackup = [...records].sort((a,b) => a.date.localeCompare(b.date));
       const backupData = { time: new Date().toISOString(), records: sortedForBackup };
       const jsonStr = JSON.stringify(backupData, null, 2);
@@ -942,6 +945,9 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
+      // 记录最后一次备份的文件内容到 localStorage（用于自动导入）
+      localStorage.setItem('last_backup_data', jsonStr);
+      
       let backups = JSON.parse(localStorage.getItem('ledger_backup_list') || '[]');
       backups.push({ time: timestamp });
       while (backups.length > 3) backups.shift();
@@ -949,13 +955,76 @@
     } catch(e) { console.warn(e); }
   }
 
-  function manualBackup() { 
-    if (!records.length) {
-      showToast("无数据");
-      return;
-    }
-    performAutoBackup();
-    showToast("已备份");
+  // 导入备份
+  function importBackup(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const backupData = JSON.parse(e.target.result);
+        let importedRecords = [];
+        if (backupData.records && Array.isArray(backupData.records)) {
+          importedRecords = backupData.records;
+        } else if (Array.isArray(backupData)) {
+          importedRecords = backupData;
+        } else {
+          throw new Error("格式错误");
+        }
+        
+        if (importedRecords.length === 0) {
+          showToast("备份文件无数据");
+          return;
+        }
+        
+        if (!confirm(`找到 ${importedRecords.length} 条记录，确定要恢复吗？当前数据将被覆盖！`)) return;
+        
+        const tx = db.transaction("records", "readwrite");
+        const store = tx.objectStore("records");
+        store.clear();
+        importedRecords.forEach(r => store.add(r));
+        
+        tx.oncomplete = () => {
+          showToast(`已导入 ${importedRecords.length} 条记录`);
+          refreshAll();
+        };
+        tx.onerror = () => showToast("导入失败");
+      } catch(err) {
+        showToast("文件解析失败");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // 尝试自动导入最后一次保存的备份
+  function tryAutoImportLastBackup() {
+    const lastBackupData = localStorage.getItem('last_backup_data');
+    if (!lastBackupData) return;
+    
+    // 检查当前是否有数据
+    if (records.length > 0) return;
+    
+    try {
+      const backupData = JSON.parse(lastBackupData);
+      let importedRecords = [];
+      if (backupData.records && Array.isArray(backupData.records)) {
+        importedRecords = backupData.records;
+      } else if (Array.isArray(backupData)) {
+        importedRecords = backupData;
+      }
+      
+      if (importedRecords.length === 0) return;
+      
+      // 静默导入
+      const tx = db.transaction("records", "readwrite");
+      const store = tx.objectStore("records");
+      store.clear();
+      importedRecords.forEach(r => store.add(r));
+      tx.oncomplete = () => {
+        records = importedRecords.sort((a,b) => b.date.localeCompare(a.date));
+        renderLedgerList();
+        showToast(`已恢复上次备份 (${importedRecords.length}条)`);
+      };
+    } catch(e) { console.warn(e); }
   }
 
   // 汇总功能
@@ -1086,17 +1155,41 @@
     });
   }
 
+  // 导入按钮逻辑
+  function setupImport() {
+    const importBtn = document.getElementById('importBtn');
+    const fileInput = document.getElementById('importFileInput');
+    
+    importBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        importBackup(e.target.files[0]);
+        fileInput.value = '';
+      }
+    });
+  }
+
   renderCatButtons();
   renderAccountButtons();
   setupKeyboard();
   setupDatePicker();
   initSummaryButtons();
+  setupImport();
   
-  document.getElementById('manualBackupBtn').addEventListener('click', manualBackup);
   document.getElementById('openSummaryBtn').addEventListener('click', showSummaryPage);
   document.getElementById('closeSummaryBtn').addEventListener('click', showMainPage);
   document.getElementById('openLedgerBtn').addEventListener('click', showLedgerPage);
   document.getElementById('closeLedgerBtn').addEventListener('click', showMainPage);
+  
+  // 页面加载后尝试自动导入最后一次备份
+  setTimeout(() => {
+    if (records.length === 0) {
+      tryAutoImportLastBackup();
+    }
+  }, 500);
 
   function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 </script>
