@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>记账本 | LEDGER</title>
+<title>记账本 | 流水账</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap');
@@ -24,7 +24,7 @@
     padding-top: var(--safe-top); padding-bottom: calc(var(--safe-bottom) + 80px);
   }
 
-  header { padding: 40px 20px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; }
+  header { padding: 40px 20px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
   h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; }
   .sync-btn { background: none; border: 1px solid var(--border); padding: 5px 10px; font-size: 11px; border-radius: 4px; color: var(--muted); cursor: pointer; font-family: 'Space Mono'; text-transform: uppercase; }
 
@@ -44,59 +44,68 @@
 
   .record-item { padding: 20px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center; }
   .record-date { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-  .record-desc { font-weight: 600; font-size: 17px; display: flex; align-items: center; }
-  .record-cat { font-size: 11px; color: var(--muted); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; margin-left: 8px; font-weight: 400; }
+  .record-desc { font-weight: 600; font-size: 17px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .record-cat { font-size: 11px; color: var(--muted); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; font-weight: 400; }
   .amount-out { color: var(--accent); font-weight: 700; font-family: 'Space Mono'; }
   .amount-in { color: var(--green); font-weight: 700; font-family: 'Space Mono'; }
 
   /* GitHub Modal */
   #gh-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(26,26,26,0.9); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
-  .modal-content { background: var(--paper); padding: 30px; width: 90%; max-width: 400px; border: 1px solid var(--ink); box-shadow: 12px 12px 0 var(--ink); }
+  .modal-content { background: var(--paper); padding: 30px; width: 90%; max-width: 450px; border: 1px solid var(--ink); box-shadow: 12px 12px 0 var(--ink); max-height: 90vh; overflow-y: auto; }
   .gh-input { width:100%; margin-bottom: 15px; padding:12px; border:1px solid var(--border); background: var(--cream); font-size: 14px; font-family: 'Space Mono'; }
+  .help-text { font-size: 11px; color: var(--accent2); margin-top: -12px; margin-bottom: 16px; line-height: 1.4; }
   
-  #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; padding: 10px 20px; font-size: 12px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 3000; }
+  #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; padding: 10px 20px; font-size: 13px; border-radius: 30px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 3000; font-family: monospace; white-space: nowrap; }
+  
+  .status-badge { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .status-online { background-color: var(--green); box-shadow: 0 0 4px var(--green); }
+  .status-offline { background-color: var(--muted); }
+  
+  .error-log { background: #fff0f0; border-left: 3px solid var(--accent); padding: 12px; margin-top: 16px; font-size: 12px; font-family: monospace; color: #a33; display: none; }
 </style>
 </head>
 <body>
 
 <header>
   <div>
-    <div style="font-family:'Space Mono'; font-size:12px; color:var(--muted); margin-bottom:4px;">SYNC_ENABLED_v2.1</div>
-    <h1>流水账</h1>
+    <div style="font-family:'Space Mono'; font-size:12px; color:var(--muted); margin-bottom:4px;">
+      <span id="sync-status-icon" class="status-badge status-offline"></span> 云端未配置
+    </div>
+    <h1>📒 流水账</h1>
   </div>
-  <button class="sync-btn" onclick="toggleGHModal()">⚙️ Sync_Config</button>
+  <button class="sync-btn" onclick="toggleGHModal()">☁️ 云端备份</button>
 </header>
 
 <div class="container">
   <div class="card">
     <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:20px;">
-      <div><label>日期</label><input type="date" id="date"></div>
-      <div><label>金额</label><input type="number" id="amount" step="0.01" placeholder="0.00"></div>
+      <div><label>📅 日期</label><input type="date" id="date"></div>
+      <div><label>💰 金额</label><input type="number" id="amount" step="0.01" placeholder="0.00"></div>
     </div>
-    <label>内容</label>
-    <input type="text" id="desc" placeholder="吃了什么？买了什么？">
+    <label>📝 内容</label>
+    <input type="text" id="desc" placeholder="例：吃了火锅 / 发了工资">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-      <div><label>分类</label><select id="cat"></select></div>
+      <div><label>🏷️ 分类</label><select id="cat"></select></div>
       <div>
-        <label>账户</label>
+        <label>💳 账户</label>
         <select id="acct">
-          <option value="银行卡">澳洲银行卡</option>
-          <option value="现金">现金 (AUD/CNY)</option>
-          <option value="支付宝">支付宝</option>
-          <option value="微信">微信支付</option>
+          <option value="银行卡">🏦 澳洲银行卡</option>
+          <option value="现金">💵 现金</option>
+          <option value="支付宝">📱 支付宝</option>
+          <option value="微信">💚 微信支付</option>
         </select>
       </div>
     </div>
     <div class="btn-group">
-      <button class="secondary" onclick="addRecord('in')">收入 (+)</button>
-      <button class="primary" onclick="addRecord('out')">支出 (-)</button>
+      <button class="secondary" onclick="addRecord('in')">➕ 收入</button>
+      <button class="primary" onclick="addRecord('out')">➖ 支出</button>
     </div>
   </div>
 
   <div style="margin-top:40px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 12px;">
       <select id="month-select" style="width:auto; margin:0; border:none; font-weight:700; font-size:20px;" onchange="render()"></select>
-      <button class="sync-btn" onclick="exportExcel()">Export .xlsx</button>
+      <button class="sync-btn" onclick="exportExcel()">📎 导出 Excel</button>
     </div>
     <div id="list"></div>
   </div>
@@ -104,18 +113,27 @@
 
 <div id="gh-modal">
   <div class="modal-content">
-    <h2 style="margin:0 0 20px; font-family:'Space Mono';">CLOUD_CONFIG</h2>
-    <label>GitHub Token (Fine-grained)</label>
-    <input type="password" id="gh-token" class="gh-input" placeholder="github_pat_...">
-    <label>Private Repo Path</label>
-    <input type="text" id="gh-repo" class="gh-input" placeholder="rune1216-max/my-ledger-data">
-    <button class="primary" style="width:100%" onclick="saveGHSettings()">SAVE & SYNC NOW</button>
-    <button class="secondary" style="width:100%; margin-top:12px; border-color:var(--accent2); color:var(--accent2);" onclick="restoreFromGH()">RESTORE FROM CLOUD</button>
-    <button class="sync-btn" style="width:100%; margin-top:20px; border:none;" onclick="toggleGHModal()">CLOSE</button>
+    <h2 style="margin:0 0 10px; font-family:'Space Mono';">☁️ GitHub 云端备份</h2>
+    <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">设置一次，以后记账会自动同步到云端</p>
+    
+    <label>🔑 GitHub Token（令牌）</label>
+    <input type="password" id="gh-token" class="gh-input" placeholder="github_pat_xxxxxx">
+    <div class="help-text">👉 <a href="#" onclick="window.open('https://github.com/settings/tokens/new?scopes=repo','_blank'); return false;" style="color: var(--accent2);">点击这里创建 Token</a>（勾选 repo 权限）</div>
+    
+    <label>📁 仓库路径</label>
+    <input type="text" id="gh-repo" class="gh-input" placeholder="你的用户名/仓库名">
+    <div class="help-text">👉 例：zhangsan/ledger-data（需提前在 GitHub 创建好私有仓库）</div>
+    
+    <button class="primary" style="width:100%" onclick="saveGHSettings()">💾 保存并立即同步</button>
+    <button class="secondary" style="width:100%; margin-top:12px; border-color:var(--accent2); color:var(--accent2);" onclick="restoreFromGH()">📥 从云端恢复</button>
+    
+    <div id="sync-error-detail" class="error-log"></div>
+    
+    <button class="sync-btn" style="width:100%; margin-top:20px; border:none;" onclick="toggleGHModal()">🔒 关闭</button>
   </div>
 </div>
 
-<div id="toast">已同步至云端</div>
+<div id="toast">✨ 提示信息</div>
 
 <script>
 const CATS_OUT = ['餐饮','购物','交通','娱乐','居家','医疗','教育','其他'];
@@ -136,6 +154,10 @@ request.onsuccess = e => {
   db = e.target.result;
   loadRecords();
 };
+request.onerror = e => {
+  console.error("数据库错误", e);
+  showToast("❌ 本地数据库加载失败");
+};
 
 function loadRecords() {
   const transaction = db.transaction("records", "readonly");
@@ -145,6 +167,11 @@ function loadRecords() {
     records = req.result.sort((a,b) => b.date.localeCompare(a.date));
     initFilters();
     render();
+    updateCloudStatusDisplay();
+    // 如果配置了云端，自动尝试同步（静默）
+    if(localStorage.getItem('gh_token') && localStorage.getItem('gh_repo')) {
+      setTimeout(() => syncToGitHub(true), 500);
+    }
   };
 }
 
@@ -152,13 +179,17 @@ function loadRecords() {
 async function addRecord(type) {
   const amt = parseFloat(document.getElementById('amount').value);
   const desc = document.getElementById('desc').value;
-  if(!amt || !desc) return alert('请填写完整信息');
+  const dateVal = document.getElementById('date').value;
+  
+  if(!amt || isNaN(amt)) return alert('请填写正确的金额');
+  if(!desc.trim()) return alert('请填写内容说明');
+  if(!dateVal) return alert('请选择日期');
   
   const record = {
     id: Date.now(),
-    date: document.getElementById('date').value,
-    amount: amt,
-    desc: desc,
+    date: dateVal,
+    amount: Math.abs(amt),
+    desc: desc.trim(),
     cat: document.getElementById('cat').value,
     acct: document.getElementById('acct').value,
     type: type
@@ -169,134 +200,298 @@ async function addRecord(type) {
   tx.oncomplete = () => {
     records.unshift(record);
     render();
-    if(localStorage.getItem('gh_token')) syncToGitHub();
+    // 自动云端备份
+    if(localStorage.getItem('gh_token') && localStorage.getItem('gh_repo')) {
+      syncToGitHub(false);
+    }
+    // 清空输入
     document.getElementById('amount').value = '';
     document.getElementById('desc').value = '';
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    showToast(`✅ ${type === 'out' ? '支出' : '收入'} 已记录`);
   };
+  tx.onerror = () => alert('保存失败');
 }
 
-// GitHub 同步核心 (针对澳洲网络和中文优化)
-async function syncToGitHub() {
+// 显示云端状态
+function updateCloudStatusDisplay() {
+  const token = localStorage.getItem('gh_token');
+  const repo = localStorage.getItem('gh_repo');
+  const statusSpan = document.getElementById('sync-status-icon');
+  const statusText = document.querySelector('header div div');
+  
+  if(token && repo) {
+    statusSpan.className = 'status-badge status-online';
+    if(statusText) statusText.innerHTML = '<span class="status-badge status-online"></span> 云端已连接 · 自动同步';
+  } else {
+    statusSpan.className = 'status-badge status-offline';
+    if(statusText) statusText.innerHTML = '<span class="status-badge status-offline"></span> 未连接云端（点击右上角设置）';
+  }
+}
+
+// GitHub 同步核心 - 增强版，带详细错误提示
+async function syncToGitHub(silent = false) {
   const token = localStorage.getItem('gh_token')?.trim();
   const repo = localStorage.getItem('gh_repo')?.trim();
-  if(!token || !repo) return;
+  if(!token || !repo) {
+    if(!silent) showToast("⚠️ 请先点击右上角配置云端");
+    return false;
+  }
 
   const url = `https://api.github.com/repos/${repo}/contents/data.json`;
+  if(!silent) showToast("☁️ 同步中...");
   
   try {
+    // 1. 获取现有文件SHA
+    let sha = "";
+    let fileExists = false;
+    
     const getRes = await fetch(url, {
-      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' }
+      headers: { 
+        'Authorization': `token ${token}`, 
+        'Accept': 'application/vnd.github.v3+json'
+      }
     });
     
-    let sha = "";
-    if (getRes.ok) {
+    if (getRes.status === 200) {
       const fileData = await getRes.json();
       sha = fileData.sha;
+      fileExists = true;
+    } else if (getRes.status === 404) {
+      // 文件不存在，没问题，稍后创建
+      console.log("云端文件不存在，将新建");
+    } else if (getRes.status === 401) {
+      const detail = "Token 无效或已过期，请重新生成";
+      showToast("❌ " + detail);
+      document.getElementById('sync-error-detail').innerHTML = `<strong>⚠️ 认证失败</strong><br>${detail}<br><br>👉 解决：删除旧 Token，在 GitHub 重新生成并勾选 repo 权限`;
+      document.getElementById('sync-error-detail').style.display = 'block';
+      return false;
+    } else if (getRes.status === 403) {
+      const detail = "Token 权限不足，需要 'repo' 完整权限";
+      showToast("❌ " + detail);
+      document.getElementById('sync-error-detail').innerHTML = `<strong>⚠️ 权限不足</strong><br>${detail}<br><br>👉 解决：编辑 Token，勾选 'repo' 全部权限`;
+      document.getElementById('sync-error-detail').style.display = 'block';
+      return false;
+    } else if (getRes.status === 404 && getRes.statusText !== 'Not Found') {
+      const detail = "仓库不存在或路径错误，请检查仓库名格式: 用户名/仓库名";
+      showToast("❌ " + detail);
+      document.getElementById('sync-error-detail').innerHTML = `<strong>⚠️ 仓库错误</strong><br>${detail}<br><br>👉 解决：先在 GitHub 创建仓库，再填写正确的路径`;
+      document.getElementById('sync-error-detail').style.display = 'block';
+      return false;
     }
 
-    // 处理中文 Base64 编码
-    const jsonStr = JSON.stringify(records);
-    const uint8Array = new TextEncoder().encode(jsonStr);
-    const binString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join("");
-    const b64Content = btoa(binString);
+    // 2. 准备数据 - 正确处理中文
+    const jsonStr = JSON.stringify(records, null, 2);
+    // 更好的 UTF-8 转 Base64
+    const utf8Bytes = new TextEncoder().encode(jsonStr);
+    let binaryString = '';
+    for (let i = 0; i < utf8Bytes.length; i++) {
+      binaryString += String.fromCharCode(utf8Bytes[i]);
+    }
+    const b64Content = btoa(binaryString);
 
+    // 3. 上传
     const putRes = await fetch(url, {
       method: 'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      headers: { 
+        'Authorization': `token ${token}`, 
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        message: `Sync: ${new Date().toLocaleString()}`,
+        message: `📝 记账同步 ${new Date().toLocaleString('zh-CN')}`,
         content: b64Content,
         sha: sha || undefined
       })
     });
 
-    if(putRes.ok) showToast("Cloud Synced ✓");
+    if(putRes.ok) {
+      showToast("✅ 云端同步成功");
+      document.getElementById('sync-error-detail').style.display = 'none';
+      return true;
+    } else {
+      const error = await putRes.json();
+      let errorMsg = error.message || "未知错误";
+      if(errorMsg.includes("sha")) errorMsg = "文件版本冲突，请稍后重试或先执行【从云端恢复】";
+      showToast(`❌ 同步失败: ${errorMsg.substring(0, 40)}`);
+      document.getElementById('sync-error-detail').innerHTML = `<strong>❌ 上传失败</strong><br>${errorMsg}<br><br>👉 建议：检查网络或稍后重试`;
+      document.getElementById('sync-error-detail').style.display = 'block';
+      return false;
+    }
   } catch(e) {
     console.error(e);
-    showToast("Sync Error: " + e.message);
+    let friendlyMsg = "网络错误，可能是无法访问 GitHub API";
+    if(e.message.includes("fetch")) friendlyMsg = "网络连接失败，请检查是否能访问 github.com";
+    if(!silent) showToast(`❌ ${friendlyMsg}`);
+    document.getElementById('sync-error-detail').innerHTML = `<strong>⚠️ 网络错误</strong><br>${e.message}<br><br>👉 解决：1. 检查网络代理 2. 使用手机热点重试 3. 稍后再试`;
+    document.getElementById('sync-error-detail').style.display = 'block';
+    return false;
   }
 }
 
+// 从云端恢复
 async function restoreFromGH() {
   const token = localStorage.getItem('gh_token')?.trim();
   const repo = localStorage.getItem('gh_repo')?.trim();
-  if(!token || !repo) return alert("请先配置设置");
-  if(!confirm("确定要用云端数据覆盖本地吗？此操作不可逆！")) return;
+  if(!token || !repo) {
+    alert("请先配置 GitHub Token 和仓库路径");
+    return;
+  }
+  
+  if(!confirm("⚠️ 警告：云端数据将完全覆盖本地！\n\n本地未同步的记录会丢失。\n确定要继续吗？")) return;
 
+  showToast("📥 下载云端数据...");
+  
   try {
     const res = await fetch(`https://api.github.com/repos/${repo}/contents/data.json`, {
-      headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
+      headers: { 
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
     });
-    if(res.ok) {
-      const data = await res.json();
-      // 解码中文 Base64
-      const binString = atob(data.content);
-      const uint8Array = Uint8Array.from(binString, char => char.charCodeAt(0));
-      const cloudData = JSON.parse(new TextDecoder().decode(uint8Array));
-      
-      const tx = db.transaction("records", "readwrite");
-      const store = tx.objectStore("records");
-      store.clear();
-      cloudData.forEach(r => store.add(r));
-      tx.oncomplete = () => location.reload();
-    } else {
-      alert("云端未发现备份文件 data.json");
+    
+    if(res.status === 404) {
+      alert("云端未找到备份文件 (data.json)\n请先执行一次【保存并同步】上传数据");
+      return;
     }
+    
+    if(res.status === 401) {
+      alert("Token 无效，请重新配置");
+      return;
+    }
+    
+    if(!res.ok) {
+      const error = await res.json();
+      alert(`获取失败: ${error.message}`);
+      return;
+    }
+    
+    const data = await res.json();
+    // 解码 Base64 到 UTF-8
+    const binaryString = atob(data.content);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const jsonStr = new TextDecoder().decode(bytes);
+    const cloudData = JSON.parse(jsonStr);
+    
+    if(!cloudData || !cloudData.length) {
+      alert("云端数据为空");
+      return;
+    }
+    
+    // 覆盖本地数据库
+    const tx = db.transaction("records", "readwrite");
+    const store = tx.objectStore("records");
+    await store.clear();
+    for(let record of cloudData) {
+      await store.add(record);
+    }
+    
+    tx.oncomplete = () => {
+      showToast("✅ 恢复成功，刷新页面...");
+      setTimeout(() => location.reload(), 1200);
+    };
+    tx.onerror = () => alert("写入本地失败");
+    
   } catch(e) {
     alert("恢复失败: " + e.message);
+    console.error(e);
   }
 }
 
 // UI 辅助函数
 function toggleGHModal() {
   const m = document.getElementById('gh-modal');
-  m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
-  if(m.style.display === 'flex') {
+  const wasHidden = m.style.display !== 'flex';
+  m.style.display = wasHidden ? 'flex' : 'none';
+  if(wasHidden) {
     document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
     document.getElementById('gh-repo').value = localStorage.getItem('gh_repo') || '';
+    document.getElementById('sync-error-detail').style.display = 'none';
   }
 }
 
-function saveGHSettings() {
-  localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
-  localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
-  syncToGitHub().then(() => {
-    alert("设置已保存并尝试初始同步");
+async function saveGHSettings() {
+  const token = document.getElementById('gh-token').value.trim();
+  const repo = document.getElementById('gh-repo').value.trim();
+  
+  if(!token || !repo) {
+    alert("请填写 Token 和仓库路径");
+    return;
+  }
+  
+  // 简单验证仓库格式
+  if(!repo.includes('/')) {
+    alert("仓库路径格式错误，应为：用户名/仓库名\n例如：zhangsan/ledger-data");
+    return;
+  }
+  
+  localStorage.setItem('gh_token', token);
+  localStorage.setItem('gh_repo', repo);
+  
+  showToast("⚙️ 配置已保存，正在测试连接...");
+  updateCloudStatusDisplay();
+  
+  // 测试同步
+  const success = await syncToGitHub(false);
+  if(success) {
+    alert("✅ 配置成功！数据已同步到云端。\n以后每次记账都会自动备份。");
     toggleGHModal();
-  });
+  } else {
+    // 错误信息已经在 syncToGitHub 里显示
+    alert("⚠️ 同步失败，请查看弹窗中的红色错误提示，根据指引修正 Token 或仓库路径。\n\n常见原因：\n1. Token 没有勾选 repo 权限\n2. 仓库名填写错误\n3. 仓库不存在");
+  }
 }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.innerText = msg; t.style.opacity = '1';
-  setTimeout(() => t.style.opacity = '0', 2500);
+  t.innerText = msg;
+  t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 2800);
 }
 
 function initFilters() {
   const dateInput = document.getElementById('date');
   if(!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
   
-  const months = [...new Set(records.map(r => r.date.substring(0, 7)))];
+  // 生成月份列表
+  let months = [...new Set(records.map(r => r.date.substring(0, 7)))];
   const currMonth = new Date().toISOString().substring(0, 7);
   if(!months.includes(currMonth)) months.unshift(currMonth);
+  if(months.length === 0) months = [currMonth];
   
   const sel = document.getElementById('month-select');
-  sel.innerHTML = months.sort().reverse().map(m => `<option value="${m}">${m.replace('-',' / ')}</option>`).join('');
+  sel.innerHTML = months.sort().reverse().map(m => `<option value="${m}">📅 ${m.replace('-',' 年 ')} 月</option>`).join('');
   
+  // 分类下拉根据支出/收入动态变化，这里默认支出分类
   const catSel = document.getElementById('cat');
   catSel.innerHTML = CATS_OUT.map(c => `<option value="${c}">${c}</option>`).join('');
+  
+  // 监听类型变化（通过按钮切换分类列表）
+  window.setCatByType = function(type) {
+    const catSel = document.getElementById('cat');
+    if(type === 'out') catSel.innerHTML = CATS_OUT.map(c => `<option value="${c}">${c}</option>`).join('');
+    else catSel.innerHTML = CATS_IN.map(c => `<option value="${c}">${c}</option>`).join('');
+  };
 }
 
 function render() {
   const month = document.getElementById('month-select').value;
+  if(!month) return;
   const filtered = records.filter(r => r.date.startsWith(month));
   const list = document.getElementById('list');
+  
+  if(filtered.length === 0) {
+    list.innerHTML = '<div style="text-align:center; padding: 40px; color: var(--muted);">📭 本月暂无记录，点击上方记录一笔</div>';
+    return;
+  }
   
   list.innerHTML = filtered.map(r => `
     <div class="record-item">
       <div>
         <div class="record-date">${r.date} · ${r.acct}</div>
-        <div class="record-desc">${r.desc}<span class="record-cat">${r.cat}</span></div>
+        <div class="record-desc">${escapeHtml(r.desc)}<span class="record-cat">${r.cat}</span></div>
       </div>
       <div class="${r.type==='out'?'amount-out':'amount-in'}">
         ${r.type==='out'?'-':'+'}${r.amount.toFixed(2)}
@@ -305,15 +500,35 @@ function render() {
   `).join('');
 }
 
+function escapeHtml(str) {
+  return str.replace(/[&<>]/g, function(m) {
+    if(m === '&') return '&amp;';
+    if(m === '<') return '&lt;';
+    if(m === '>') return '&gt;';
+    return m;
+  });
+}
+
 function exportExcel() {
   const month = document.getElementById('month-select').value;
   const mR = records.filter(r => r.date.startsWith(month));
   if(!mR.length) return alert('该月无数据');
-  const ws = XLSX.utils.json_to_sheet(mR);
+  const ws = XLSX.utils.json_to_sheet(mR.map(r => ({
+    '日期': r.date, '类型': r.type === 'out' ? '支出' : '收入', '金额': r.amount, 
+    '内容': r.desc, '分类': r.cat, '账户': r.acct
+  })));
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Financial_Report");
-  XLSX.writeFile(wb, `Ledger_${month}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, "记账本");
+  XLSX.writeFile(wb, `记账本_${month}.xlsx`);
+  showToast("📎 导出成功");
 }
+
+// 重写 addRecord 以支持动态分类
+const originalAddRecord = addRecord;
+window.addRecord = function(type) {
+  if(window.setCatByType) window.setCatByType(type);
+  originalAddRecord(type);
+};
 </script>
 </body>
 </html>
