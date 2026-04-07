@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -453,6 +454,7 @@
     background: #e9e9ef;
   }
 
+  /* 底部提示 */
   .toast {
     position: fixed;
     bottom: 20px;
@@ -510,7 +512,8 @@
       </div>
       <div>
         <button class="date-picker" id="dateTriggerBtn">📅 今天</button>
-        <button class="import-btn" id="importBtn" title="导入备份">📂</button>
+        <!-- 导入按钮 -->
+        <button class="import-btn" id="importBtn" title="导入备份">📂 导入</button>
         <input type="file" id="importFileInput" class="import-file-input" accept=".json">
       </div>
     </div>
@@ -628,7 +631,7 @@
     toast.classList.add('show');
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
-    }, 800);
+    }, 800); // 0.8秒后消失
   }
 
   // Service Worker
@@ -693,6 +696,7 @@
     const tx = db.transaction("records", "readonly");
     const req = tx.objectStore("records").getAll();
     req.onsuccess = () => {
+      // 按时间倒序（最新在上）
       records = req.result.sort((a,b) => b.date.localeCompare(a.date));
       renderLedgerList();
     };
@@ -795,9 +799,9 @@
     const amount = parseFloat(currentAmount);
     const purpose = document.getElementById('purposeInput').value.trim();
     
-    if (isNaN(amount) || amount <= 0) { showToast("金额"); return; }
-    if (!selectedCategory) { showToast("分类"); return; }
-    if (!purpose) { showToast("用途"); return; }
+    if (isNaN(amount) || amount <= 0) { showToast("请输入金额"); return; }
+    if (!selectedCategory) { showToast("请选择分类"); return; }
+    if (!purpose) { showToast("请填写用途"); return; }
     
     const dateStr = currentDate.toISOString().split('T')[0];
     const record = {
@@ -817,9 +821,9 @@
       document.getElementById('purposeInput').value = '';
       currentAmount = "0";
       document.getElementById('amountDisplay').innerText = "0.00";
-      showToast(`¥${amount.toFixed(2)}`);
+      showToast(`已记录 ¥${amount.toFixed(2)}`);
       renderLedgerList();
-      performAutoBackup();
+      performAutoBackup(); // 只有记账后才自动备份
     };
   }
 
@@ -835,7 +839,7 @@
         refreshSummary();
       }
       showToast("已删除");
-      performAutoBackup();
+      performAutoBackup(); // 删除后也备份一下
     };
   }
 
@@ -927,7 +931,7 @@
     deleteRecord(id);
   };
 
-  // 自动备份（时间正序）
+  // 自动备份（时间正序，仅在记账/编辑/删除后触发）
   function performAutoBackup() {
     if (!records.length) return;
     try {
@@ -945,17 +949,11 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      // 记录最后一次备份的文件内容到 localStorage（用于自动导入）
-      localStorage.setItem('last_backup_data', jsonStr);
-      
-      let backups = JSON.parse(localStorage.getItem('ledger_backup_list') || '[]');
-      backups.push({ time: timestamp });
-      while (backups.length > 3) backups.shift();
-      localStorage.setItem('ledger_backup_list', JSON.stringify(backups));
+      // 静默完成，不弹提示
     } catch(e) { console.warn(e); }
   }
 
-  // 导入备份
+  // 导入备份（手动）
   function importBackup(file) {
     if (!file) return;
     const reader = new FileReader();
@@ -986,6 +984,7 @@
         tx.oncomplete = () => {
           showToast(`已导入 ${importedRecords.length} 条记录`);
           refreshAll();
+          performAutoBackup(); // 导入后也备份一下
         };
         tx.onerror = () => showToast("导入失败");
       } catch(err) {
@@ -993,38 +992,6 @@
       }
     };
     reader.readAsText(file);
-  }
-
-  // 尝试自动导入最后一次保存的备份
-  function tryAutoImportLastBackup() {
-    const lastBackupData = localStorage.getItem('last_backup_data');
-    if (!lastBackupData) return;
-    
-    // 检查当前是否有数据
-    if (records.length > 0) return;
-    
-    try {
-      const backupData = JSON.parse(lastBackupData);
-      let importedRecords = [];
-      if (backupData.records && Array.isArray(backupData.records)) {
-        importedRecords = backupData.records;
-      } else if (Array.isArray(backupData)) {
-        importedRecords = backupData;
-      }
-      
-      if (importedRecords.length === 0) return;
-      
-      // 静默导入
-      const tx = db.transaction("records", "readwrite");
-      const store = tx.objectStore("records");
-      store.clear();
-      importedRecords.forEach(r => store.add(r));
-      tx.oncomplete = () => {
-        records = importedRecords.sort((a,b) => b.date.localeCompare(a.date));
-        renderLedgerList();
-        showToast(`已恢复上次备份 (${importedRecords.length}条)`);
-      };
-    } catch(e) { console.warn(e); }
   }
 
   // 汇总功能
@@ -1172,6 +1139,7 @@
     });
   }
 
+  // 初始化
   renderCatButtons();
   renderAccountButtons();
   setupKeyboard();
@@ -1184,14 +1152,8 @@
   document.getElementById('openLedgerBtn').addEventListener('click', showLedgerPage);
   document.getElementById('closeLedgerBtn').addEventListener('click', showMainPage);
   
-  // 页面加载后尝试自动导入最后一次备份
-  setTimeout(() => {
-    if (records.length === 0) {
-      tryAutoImportLastBackup();
-    }
-  }, 500);
-
   function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 </script>
 </body>
 </html>
+```
