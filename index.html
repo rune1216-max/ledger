@@ -36,6 +36,36 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
+  }
+
+  /* 页面切换 */
+  .page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    transition: transform 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .page-main {
+    transform: translateX(0);
+    z-index: 2;
+  }
+  .page-summary {
+    transform: translateX(100%);
+    z-index: 1;
+  }
+  .page-main.slide-out {
+    transform: translateX(-100%);
+  }
+  .page-summary.slide-in {
+    transform: translateX(0);
+    z-index: 3;
   }
 
   /* 顶部栏 */
@@ -59,6 +89,15 @@
     cursor: pointer;
     font-family: inherit;
   }
+  .summary-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 6px 10px;
+    color: #ff9f0a;
+    font-weight: 500;
+  }
   .backup-btn {
     background: none;
     border: none;
@@ -67,7 +106,7 @@
     padding: 6px 10px;
   }
 
-  /* 主内容区 - 固定高度不滚动 */
+  /* 主内容区 */
   .main-content {
     flex: 1;
     display: flex;
@@ -120,7 +159,7 @@
     border-color: #ff9f0a;
   }
 
-  /* 账户网格 - 4列 */
+  /* 账户网格 */
   .account-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -145,7 +184,7 @@
   .account-icon { font-size: 22px; }
   .account-name { font-size: 10px; font-weight: 500; margin-top: 4px; color: #3a3a3c; }
 
-  /* 金额显示区 - 右对齐 */
+  /* 金额显示区 */
   .amount-area {
     text-align: right;
     padding: 8px 4px 12px 4px;
@@ -205,57 +244,83 @@
     font-size: 22px;
   }
 
-  /* 历史记录 - 紧凑 */
-  .history-section {
-    flex-shrink: 0;
-    background: #ffffff;
-    border-top: 1px solid #efeff4;
-    padding: 10px 0 8px;
-    max-height: 135px;
-    overflow-y: auto;
-  }
-  .history-header {
-    font-size: 11px;
-    font-weight: 600;
-    color: #8e8e93;
-    margin-bottom: 8px;
-    padding: 0 4px;
-  }
-  .history-item {
+  /* 汇总页面样式 */
+  .summary-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 8px 0;
+    padding: 12px 16px;
+    background: white;
     border-bottom: 1px solid #efeff4;
-    font-size: 13px;
+    gap: 12px;
   }
-  .history-detail {
+  .back-btn {
+    background: #f2f2f6;
+    border: none;
+    border-radius: 30px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .summary-title {
+    font-size: 18px;
+    font-weight: 600;
+    flex: 1;
+  }
+  .filter-bar {
+    padding: 12px 16px;
     display: flex;
-    align-items: center;
-    gap: 6px;
+    gap: 12px;
+    border-bottom: 1px solid #efeff4;
     flex-wrap: wrap;
   }
-  .history-cat {
-    font-size: 10px;
+  .filter-btn {
     background: #f2f2f6;
-    padding: 2px 8px;
-    border-radius: 20px;
+    border: none;
+    border-radius: 30px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
   }
-  .history-meta {
-    font-size: 10px;
+  .filter-btn.active {
+    background: #ff9f0a;
+    color: white;
+  }
+  .summary-table {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+  }
+  .table-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #efeff4;
+  }
+  .table-header {
+    font-weight: 600;
     color: #8e8e93;
+    font-size: 12px;
   }
-  .history-amount {
-    font-weight: 700;
-    color: #ff3b30;
-    font-family: monospace;
+  .table-name {
     font-size: 14px;
   }
-  .empty-history {
+  .table-amount {
+    font-weight: 600;
+    color: #ff3b30;
+    font-family: monospace;
+  }
+  .total-row {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid #e9e9ef;
+    font-weight: 700;
+  }
+  .empty-summary {
     text-align: center;
     color: #aeaeb2;
-    padding: 16px;
-    font-size: 12px;
+    padding: 40px;
   }
 
   .toast {
@@ -299,60 +364,75 @@
   <div id="installBanner" class="install-banner">
     📱 点击浏览器菜单 → 安装应用
   </div>
-  
-  <div class="top-bar">
-    <button class="date-picker" id="dateTriggerBtn">📅 今天</button>
-    <button class="backup-btn" id="manualBackupBtn" title="备份">💾</button>
+
+  <!-- 主页面 -->
+  <div id="mainPage" class="page page-main">
+    <div class="top-bar">
+      <button class="date-picker" id="dateTriggerBtn">📅 今天</button>
+      <div>
+        <button class="summary-btn" id="openSummaryBtn">📊 汇总</button>
+        <button class="backup-btn" id="manualBackupBtn" title="备份">💾</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="section">
+        <div class="cat-grid" id="catGrid"></div>
+      </div>
+
+      <input type="text" id="purposeInput" class="purpose-input" placeholder="用途" autocomplete="off">
+
+      <div class="account-grid" id="accountGrid"></div>
+
+      <div class="amount-area">
+        <div class="amount-value" id="amountDisplay">0</div>
+      </div>
+
+      <div class="keyboard">
+        <div class="key-row">
+          <button class="key" data-num="1">1</button>
+          <button class="key" data-num="2">2</button>
+          <button class="key" data-num="3">3</button>
+          <button class="key key-del" data-action="del">⌫</button>
+        </div>
+        <div class="key-row">
+          <button class="key" data-num="4">4</button>
+          <button class="key" data-num="5">5</button>
+          <button class="key" data-num="6">6</button>
+          <button class="key key-confirm" data-action="confirm">✓</button>
+        </div>
+        <div class="key-row">
+          <button class="key" data-num="7">7</button>
+          <button class="key" data-num="8">8</button>
+          <button class="key" data-num="9">9</button>
+          <button class="key" data-action="clear" style="background:#e5e5ea;">C</button>
+        </div>
+        <div class="key-row">
+          <button class="key key-zero" data-num="0">0</button>
+          <button class="key" data-num=".">.</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="main-content">
-    <!-- 分类区域 -->
-    <div class="section">
-      <div class="cat-grid" id="catGrid"></div>
+  <!-- 汇总页面 -->
+  <div id="summaryPage" class="page page-summary">
+    <div class="summary-header">
+      <button class="back-btn" id="closeSummaryBtn">← 返回</button>
+      <span class="summary-title">📊 汇总</span>
+      <div style="width: 60px;"></div>
     </div>
-
-    <!-- 用途输入框（放在账户前面） -->
-    <input type="text" id="purposeInput" class="purpose-input" placeholder="用途" autocomplete="off">
-
-    <!-- 账户网格（放在用途后面） -->
-    <div class="account-grid" id="accountGrid"></div>
-
-    <!-- 金额显示 - 右对齐 -->
-    <div class="amount-area">
-      <div class="amount-value" id="amountDisplay">0</div>
+    <div class="filter-bar">
+      <button class="filter-btn" data-type="day">日汇总</button>
+      <button class="filter-btn active" data-type="month">月汇总</button>
     </div>
-
-    <!-- 数字键盘 -->
-    <div class="keyboard">
-      <div class="key-row">
-        <button class="key" data-num="1">1</button>
-        <button class="key" data-num="2">2</button>
-        <button class="key" data-num="3">3</button>
-        <button class="key key-del" data-action="del">⌫</button>
-      </div>
-      <div class="key-row">
-        <button class="key" data-num="4">4</button>
-        <button class="key" data-num="5">5</button>
-        <button class="key" data-num="6">6</button>
-        <button class="key key-confirm" data-action="confirm">✓</button>
-      </div>
-      <div class="key-row">
-        <button class="key" data-num="7">7</button>
-        <button class="key" data-num="8">8</button>
-        <button class="key" data-num="9">9</button>
-        <button class="key" data-action="clear" style="background:#e5e5ea;">C</button>
-      </div>
-      <div class="key-row">
-        <button class="key key-zero" data-num="0">0</button>
-        <button class="key" data-num=".">.</button>
-      </div>
+    <div class="filter-bar">
+      <button class="filter-btn" data-group="category">按分类</button>
+      <button class="filter-btn active" data-group="account">按账户</button>
     </div>
-  </div>
-
-  <!-- 历史记录 -->
-  <div class="history-section">
-    <div class="history-header">📋 最近</div>
-    <div id="historyList"></div>
+    <div class="summary-table" id="summaryTable">
+      <div class="empty-summary">加载中...</div>
+    </div>
   </div>
 </div>
 
@@ -360,20 +440,20 @@
 <input type="date" id="hiddenDatePicker" class="hidden-date-input">
 
 <script>
-  // 分类配置
+  // 分类配置（医疗换成日用）
   const CATEGORIES = [
     { name: "餐饮", icon: "🍜" }, { name: "交通", icon: "🚗" },
     { name: "购物", icon: "🛒" }, { name: "娱乐", icon: "🎬" },
     { name: "住房", icon: "🏠" }, { name: "宝宝", icon: "👶" },
-    { name: "医疗", icon: "💊" }, { name: "其他", icon: "📦" }
+    { name: "日用", icon: "🧴" }, { name: "其他", icon: "📦" }
   ];
 
-  // 账户配置（带图标）
+  // 账户配置（微信/支付宝 换成微信logo）
   const ACCOUNTS = [
     { name: "现金", icon: "💵" },
     { name: "信用卡", icon: "💳" },
     { name: "借记卡", icon: "🏦" },
-    { name: "微信/支付宝", icon: "📱" }
+    { name: "微信", icon: "💬" }
   ];
 
   let db;
@@ -382,6 +462,10 @@
   let selectedCategory = "餐饮";
   let selectedAccount = "现金";
   let currentDate = new Date();
+
+  // 汇总页状态
+  let summaryType = "month";    // day / month
+  let summaryGroup = "account"; // category / account
 
   // 注册 Service Worker
   if ('serviceWorker' in navigator) {
@@ -403,6 +487,23 @@
     };
   });
 
+  // 页面切换
+  function showMainPage() {
+    const mainPage = document.getElementById('mainPage');
+    const summaryPage = document.getElementById('summaryPage');
+    mainPage.classList.remove('slide-out');
+    summaryPage.classList.remove('slide-in');
+    // 刷新汇总数据（如果从汇总返回，不需要刷新）
+  }
+
+  function showSummaryPage() {
+    const mainPage = document.getElementById('mainPage');
+    const summaryPage = document.getElementById('summaryPage');
+    mainPage.classList.add('slide-out');
+    summaryPage.classList.add('slide-in');
+    refreshSummary();
+  }
+
   // 初始化数据库
   const request = indexedDB.open("ledger_pwa", 1);
   request.onupgradeneeded = e => {
@@ -421,8 +522,12 @@
     const req = tx.objectStore("records").getAll();
     req.onsuccess = () => {
       records = req.result.sort((a,b) => b.date.localeCompare(a.date));
-      renderHistory();
     };
+  }
+
+  // 获取所有记录（供汇总使用）
+  function getAllRecords() {
+    return records;
   }
 
   // 渲染分类按钮
@@ -442,11 +547,10 @@
         selectedCategory = btn.getAttribute('data-cat');
       });
     });
-    // 默认选中第一个
     document.querySelector('.cat-item')?.classList.add('active');
   }
 
-  // 渲染账户按钮（网格形式）
+  // 渲染账户按钮
   function renderAccountButtons() {
     const grid = document.getElementById('accountGrid');
     grid.innerHTML = ACCOUNTS.map(acc => `
@@ -463,7 +567,6 @@
         selectedAccount = btn.getAttribute('data-account');
       });
     });
-    // 默认选中"现金"
     const defaultAccount = document.querySelector('.account-item[data-account="现金"]');
     if (defaultAccount) defaultAccount.classList.add('active');
   }
@@ -526,7 +629,6 @@
     tx.objectStore("records").add(record);
     tx.oncomplete = () => {
       records.unshift(record);
-      renderHistory();
       document.getElementById('purposeInput').value = '';
       currentAmount = "0";
       document.getElementById('amountDisplay').innerText = "0.00";
@@ -561,25 +663,106 @@
 
   function manualBackup() { performAutoBackup(); showToast("备份完成"); }
 
-  // 历史记录渲染
-  function renderHistory() {
-    const container = document.getElementById('historyList');
-    if (!records.length) {
-      container.innerHTML = '<div class="empty-history">暂无记录</div>';
+  // ========== 汇总功能 ==========
+  function refreshSummary() {
+    const allRecords = getAllRecords();
+    if (!allRecords.length) {
+      document.getElementById('summaryTable').innerHTML = '<div class="empty-summary">暂无数据</div>';
       return;
     }
-    container.innerHTML = records.slice(0, 20).map(r => `
-      <div class="history-item">
-        <div>
-          <div class="history-detail">
-            <span>${escapeHtml(r.desc)}</span>
-            <span class="history-cat">${r.cat}</span>
-          </div>
-          <div class="history-meta">${r.date} · ${r.acct}</div>
-        </div>
-        <div class="history-amount">-${r.amount.toFixed(2)}</div>
-      </div>
-    `).join('');
+
+    let groupedData = {};
+    let today = new Date();
+    
+    if (summaryType === 'day') {
+      // 按日期分组（最近7天）
+      const last7Days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const dateKey = d.toISOString().split('T')[0];
+        last7Days.push(dateKey);
+      }
+      last7Days.reverse();
+      
+      last7Days.forEach(date => { groupedData[date] = 0; });
+      
+      allRecords.forEach(record => {
+        if (groupedData[record.date] !== undefined) {
+          groupedData[record.date] += record.amount;
+        }
+      });
+      
+      let html = `<div class="table-row table-header"><span>日期</span><span>支出</span></div>`;
+      for (let [date, amount] of Object.entries(groupedData)) {
+        html += `<div class="table-row"><span class="table-name">${date}</span><span class="table-amount">¥${amount.toFixed(2)}</span></div>`;
+      }
+      document.getElementById('summaryTable').innerHTML = html;
+      
+    } else if (summaryType === 'month') {
+      // 按月分组（最近6个月）
+      const last6Months = [];
+      for (let i = 0; i < 6; i++) {
+        const d = new Date();
+        d.setMonth(today.getMonth() - i);
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        last6Months.unshift(monthKey);
+      }
+      
+      last6Months.forEach(month => { groupedData[month] = 0; });
+      
+      allRecords.forEach(record => {
+        const recordMonth = record.date.substring(0, 7);
+        if (groupedData[recordMonth] !== undefined) {
+          groupedData[recordMonth] += record.amount;
+        }
+      });
+      
+      let html = `<div class="table-row table-header"><span>月份</span><span>支出</span></div>`;
+      for (let [month, amount] of Object.entries(groupedData)) {
+        const displayMonth = month.replace('-', '年') + '月';
+        html += `<div class="table-row"><span class="table-name">${displayMonth}</span><span class="table-amount">¥${amount.toFixed(2)}</span></div>`;
+      }
+      document.getElementById('summaryTable').innerHTML = html;
+    }
+    
+    // 如果选择按分类/账户汇总，重新组织数据
+    if (summaryGroup === 'category') {
+      const categoryMap = {};
+      CATEGORIES.forEach(cat => { categoryMap[cat.name] = 0; });
+      
+      allRecords.forEach(record => {
+        if (categoryMap[record.cat] !== undefined) {
+          categoryMap[record.cat] += record.amount;
+        }
+      });
+      
+      let html = `<div class="table-row table-header"><span>分类</span><span>支出</span></div>`;
+      for (let [cat, amount] of Object.entries(categoryMap)) {
+        if (amount > 0) {
+          html += `<div class="table-row"><span class="table-name">${cat}</span><span class="table-amount">¥${amount.toFixed(2)}</span></div>`;
+        }
+      }
+      document.getElementById('summaryTable').innerHTML = html;
+      
+    } else if (summaryGroup === 'account') {
+      const accountMap = {};
+      ACCOUNTS.forEach(acc => { accountMap[acc.name] = 0; });
+      
+      allRecords.forEach(record => {
+        if (accountMap[record.acct] !== undefined) {
+          accountMap[record.acct] += record.amount;
+        }
+      });
+      
+      let html = `<div class="table-row table-header"><span>账户</span><span>支出</span></div>`;
+      for (let [acc, amount] of Object.entries(accountMap)) {
+        if (amount > 0) {
+          html += `<div class="table-row"><span class="table-name">${acc}</span><span class="table-amount">¥${amount.toFixed(2)}</span></div>`;
+        }
+      }
+      document.getElementById('summaryTable').innerHTML = html;
+    }
   }
 
   // 日期选择
@@ -614,14 +797,37 @@
     setTimeout(() => toast.style.opacity = '0', 2000);
   }
 
-  function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+  // 初始化汇总页按钮事件
+  function initSummaryButtons() {
+    document.querySelectorAll('.filter-btn[data-type]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn[data-type]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        summaryType = btn.getAttribute('data-type');
+        refreshSummary();
+      });
+    });
+    
+    document.querySelectorAll('.filter-btn[data-group]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn[data-group]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        summaryGroup = btn.getAttribute('data-group');
+        refreshSummary();
+      });
+    });
+  }
 
   // 初始化
   renderCatButtons();
   renderAccountButtons();
   setupKeyboard();
   setupDatePicker();
+  initSummaryButtons();
+  
   document.getElementById('manualBackupBtn').addEventListener('click', manualBackup);
+  document.getElementById('openSummaryBtn').addEventListener('click', showSummaryPage);
+  document.getElementById('closeSummaryBtn').addEventListener('click', showMainPage);
 </script>
 </body>
 </html>
