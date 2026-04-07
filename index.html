@@ -12,7 +12,7 @@
 <title>记账本</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin: 0; background: #f5f5f7; font-family: system-ui, -apple-system, sans-serif; color: #1c1c1e; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  body { margin: 0; background: #f5f5f7; font-family: system-ui, -apple-system, 'Arial Narrow', '仿宋', 'FangSong', '幼圆', 'YouYuan', sans-serif; color: #1c1c1e; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
   .app { max-width: 500px; margin: 0 auto; width: 100%; height: 100%; background: #ffffff; display: flex; flex-direction: column; overflow: hidden; position: relative; }
   .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; transition: transform 0.3s ease; overflow: hidden; display: flex; flex-direction: column; }
   .page-main { transform: translateX(0); z-index: 2; }
@@ -22,40 +22,37 @@
 
   /* 顶部栏 */
   .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #efeff4; flex-shrink: 0; }
-  .date-picker { background: #f2f2f6; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; color: #ff9f0a; border: none; cursor: pointer; }
-  .nav-btn { background: none; border: none; font-size: 16px; color: #ff9f0a; font-weight: 500; cursor: pointer; padding: 6px 10px; }
+  .date-picker { background: #f2f2f6; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; color: #ff9f0a; border: none; cursor: pointer; font-family: inherit; }
+  .nav-btn { background: none; border: none; font-size: 16px; color: #ff9f0a; font-weight: 500; cursor: pointer; padding: 6px 10px; font-family: inherit; }
 
-  /* 主内容区 */
+  /* 内容区 */
   .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 16px; }
   .cat-grid, .account-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
   .cat-item, .account-item { display: flex; flex-direction: column; align-items: center; background: #f9f9fb; padding: 8px 0; border-radius: 16px; border: 1px solid #e9e9ef; cursor: pointer; }
   .active { background: #fff2e6 !important; border-color: #ff9f0a !important; }
-  .cat-icon { font-size: 24px; } .cat-name { font-size: 11px; margin-top: 4px; }
+  .cat-icon { font-size: 24px; } .cat-name { font-size: 11px; margin-top: 4px; color: #3a3a3c; }
   
-  .purpose-input { width: 100%; background: #f9f9fb; border: 1px solid #e9e9ef; border-radius: 16px; padding: 12px 16px; font-size: 15px; outline: none; margin-bottom: 16px; }
+  .purpose-input { width: 100%; background: #f9f9fb; border: 1px solid #e9e9ef; border-radius: 16px; padding: 12px 16px; font-size: 15px; outline: none; margin-bottom: 16px; font-family: inherit; }
   .amount-area { text-align: right; padding: 10px 4px; border-bottom: 1px solid #efeff4; margin-bottom: 12px; }
-  .amount-value { font-size: 48px; font-weight: 700; font-family: monospace; }
+  .amount-value { font-size: 48px; font-weight: 700; font-family: 'Arial Narrow', monospace; }
 
   /* 键盘 */
   .keyboard { background: #ffffff; padding-bottom: 20px; }
   .key-row { display: flex; gap: 10px; margin-bottom: 10px; }
-  .key { flex: 1; background: #f2f2f6; border: none; border-radius: 50px; padding: 14px 0; font-size: 24px; font-weight: 500; cursor: pointer; }
+  .key { flex: 1; background: #f2f2f6; border: none; border-radius: 50px; padding: 14px 0; font-size: 24px; font-weight: 500; cursor: pointer; font-family: inherit; }
   .key-confirm { background: #ff9f0a; color: white; }
 
-  /* 列表 */
-  .ledger-list { flex: 1; overflow-y: auto; padding: 16px; }
+  /* 列表与汇总 */
+  .ledger-list, .summary-table { flex: 1; overflow-y: auto; padding: 16px; }
   .ledger-item { background: #f9f9fb; border-radius: 16px; padding: 12px; margin-bottom: 12px; border: 1px solid #e9e9ef; }
+  .table-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #efeff4; }
 
-  /* 弹窗 */
-  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; opacity: 0; transition: 0.3s; z-index: 9999; }
+  /* 提示与弹窗 */
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: 0.3s; z-index: 9999; pointer-events: none; }
   .show { opacity: 1; }
-  
-  /* 备份提醒覆盖层 */
   .backup-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: none; align-items: center; justify-content: center; }
-  .backup-card { background: white; margin: 30px; padding: 24px; border-radius: 24px; text-align: center; width: 85%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-  .backup-card h3 { margin-top: 0; color: #1c1c1e; }
-  .backup-card p { color: #8e8e93; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
-  .btn-download { background: #ff9f0a; color: white; border: none; padding: 14px 20px; border-radius: 30px; width: 100%; font-size: 16px; font-weight: 600; }
+  .backup-card { background: white; margin: 30px; padding: 24px; border-radius: 24px; text-align: center; width: 85%; }
+  .btn-download { background: #ff9f0a; color: white; border: none; padding: 14px 20px; border-radius: 30px; width: 100%; font-size: 16px; font-weight: 600; margin-top: 10px; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -63,10 +60,10 @@
 <div class="app">
   <div id="backupModal" class="backup-modal">
     <div class="backup-card">
-      <h3>📅 每日备份建议</h3>
-      <p>这是今天第一次打开应用。建议下载一个 CSV 备份文件到手机以确保数据绝对安全。</p>
-      <button class="btn-download" id="startDownloadBtn">下载今日备份文件</button>
-      <button class="nav-btn" style="margin-top:12px; color:#aeaeb2; font-size: 14px;" onclick="closeBackupModal()">今天不需要</button>
+      <h3 style="margin-top:0">📅 每日备份</h3>
+      <p style="color:#8e8e93; font-size:14px">建议下载今日备份文件到手机。若弹出重复提示，请选择“覆盖/替换”以节省空间。</p>
+      <button class="btn-download" id="startDownloadBtn">下载 CSV 备份</button>
+      <button class="nav-btn" style="margin-top:12px; color:#aeaeb2; font-size:14px" onclick="closeBackupModal()">稍后再说</button>
     </div>
   </div>
 
@@ -84,7 +81,7 @@
 
     <div class="main-content">
       <div id="catGrid" class="cat-grid"></div>
-      <input type="text" id="purposeInput" class="purpose-input" placeholder="输入用途...">
+      <input type="text" id="purposeInput" class="purpose-input" placeholder="输入用途..." autocomplete="off">
       <div id="accountGrid" class="account-grid"></div>
       <div class="amount-area"><div class="amount-value" id="amountDisplay">0.00</div></div>
       
@@ -93,7 +90,7 @@
           <button class="key" onclick="inputNum('1')">1</button>
           <button class="key" onclick="inputNum('2')">2</button>
           <button class="key" onclick="inputNum('3')">3</button>
-          <button class="key" onclick="inputAction('del')">⌫</button>
+          <button class="key" style="background:#e5e5ea" onclick="inputAction('del')">⌫</button>
         </div>
         <div class="key-row">
           <button class="key" onclick="inputNum('4')">4</button>
@@ -105,7 +102,7 @@
           <button class="key" onclick="inputNum('7')">7</button>
           <button class="key" onclick="inputNum('8')">8</button>
           <button class="key" onclick="inputNum('9')">9</button>
-          <button class="key" onclick="inputAction('clear')">C</button>
+          <button class="key" style="background:#e5e5ea" onclick="inputAction('clear')">C</button>
         </div>
         <div class="key-row">
           <button class="key" style="flex:2.2" onclick="inputNum('0')">0</button>
@@ -127,7 +124,7 @@
   <div id="ledgerPage" class="page page-ledger">
     <div class="top-bar">
       <button class="nav-btn" onclick="showPage('mainPage')">← 返回</button>
-      <b>历史流水</b>
+      <b>流水明细</b>
       <div style="width:50px"></div>
     </div>
     <div id="ledgerList" class="ledger-list"></div>
@@ -138,8 +135,18 @@
 <input type="date" id="hiddenDatePicker" style="display:none">
 
 <script>
-  const CATEGORIES = [{n:"餐饮",i:"🍜"},{n:"交通",i:"🚗"},{n:"购物",i:"🛒"},{n:"宝宝",i:"👶"},{n:"日用",i:"🧴"},{n:"其他",i:"📦"}];
-  const ACCOUNTS = [{n:"现金",i:"💵"},{n:"卡类",i:"💳"},{n:"微信",i:"💬"},{n:"支付宝",i:"🔹"}];
+  // 恢复最初的“分类”和“账户”配置
+  const CATEGORIES = [
+    { name: "餐饮", icon: "🍜" }, { name: "交通", icon: "🚗" },
+    { name: "购物", icon: "🛒" }, { name: "娱乐", icon: "🎬" },
+    { name: "住房", icon: "🏠" }, { name: "宝宝", icon: "👶" },
+    { name: "日用", icon: "🧴" }, { name: "其他", icon: "📦" }
+  ];
+
+  const ACCOUNTS = [
+    { name: "现金", icon: "💵" }, { name: "信用卡", icon: "💳" },
+    { name: "借记卡", icon: "🏦" }, { name: "微信", icon: "💬" }
+  ];
   
   let db, records = [], currentAmt = "0", selCat = "餐饮", selAcc = "现金", selDate = new Date();
 
@@ -152,28 +159,18 @@
   req.onsuccess = e => {
     db = e.target.result;
     loadData();
-    checkDailyBackup(); // 改为每日打开检查
+    checkDailyBackup();
   };
 
-  // 1. 每日首次打开检查
   function checkDailyBackup() {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const lastBackupDate = localStorage.getItem('last_file_backup_date');
-
-    // 如果今天还没弹出过备份提示，且有数据
-    if (lastBackupDate !== todayStr) {
-      // 延迟 1 秒弹出，避免一进页面太突兀
-      setTimeout(() => {
-        if(records.length > 0) {
-          document.getElementById('backupModal').style.display = 'flex';
-        }
-      }, 1000);
+    const today = new Date().toISOString().split('T')[0];
+    if (localStorage.getItem('last_file_backup_date') !== today) {
+      setTimeout(() => { if(records.length > 0) document.getElementById('backupModal').style.display = 'flex'; }, 1000);
     }
   }
 
   function closeBackupModal() {
     document.getElementById('backupModal').style.display = 'none';
-    // 即使点“不需要”，今天也不再提示
     localStorage.setItem('last_file_backup_date', new Date().toISOString().split('T')[0]);
   }
 
@@ -182,11 +179,8 @@
     closeBackupModal();
   };
 
-  // 2. 导出 CSV：固定文件名，防止产生大量副本
   function downloadCSV() {
     if(!records.length) return;
-    
-    // 内部备份依然保留循环槽位（3个）
     let slot = (parseInt(localStorage.getItem('file_backup_slot') || "0") + 1) % 3;
     localStorage.setItem('file_backup_slot', slot);
 
@@ -196,18 +190,13 @@
     });
 
     const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    // 固定文件名，引导手机系统覆盖旧文件，减少内存占用
+    a.href = URL.createObjectURL(blob);
     a.download = `账本数据_唯一备份.csv`; 
     a.click();
-    
-    showToast("文件已存入下载目录");
-    
-    // 内部数据库同步备份一次
+    showToast("备份已存入下载目录");
     db.transaction("backups","readwrite").objectStore("backups").put({slot: slot, data: records, time: Date.now()});
-  };
+  }
 
   function loadData() {
     db.transaction("records","readonly").objectStore("records").getAll().onsuccess = e => {
@@ -219,7 +208,7 @@
   function saveRecord() {
     const val = parseFloat(currentAmt);
     const desc = document.getElementById('purposeInput').value || "无说明";
-    if(val <= 0) return showToast("请输入金额");
+    if(val <= 0) return showToast("请输入有效金额");
     
     const item = { id: Date.now(), date: selDate.toISOString().split('T')[0], amt: val, desc: desc, cat: selCat, acct: selAcc };
     const tx = db.transaction("records","readwrite");
@@ -229,7 +218,7 @@
       currentAmt = "0";
       document.getElementById('purposeInput').value = "";
       renderAll();
-      showToast("已记录");
+      showToast("已记账 ¥" + val.toFixed(2));
     };
   }
 
@@ -238,7 +227,7 @@
       const all = e.target.result;
       if(!all.length) return showToast("暂无内部备份");
       const latest = all.reduce((a,b)=>a.time>b.time?a:b);
-      if(confirm("将数据恢复到最后一次内部备份？")){
+      if(confirm("恢复到最后一次内部备份记录？")){
         const tx = db.transaction("records","readwrite");
         const store = tx.objectStore("records");
         store.clear();
@@ -250,16 +239,31 @@
 
   function renderAll() {
     document.getElementById('amountDisplay').innerText = parseFloat(currentAmt).toFixed(2);
-    const catGrid = document.getElementById('catGrid');
-    catGrid.innerHTML = CATEGORIES.map(c => `<div class="cat-item ${selCat==c.n?'active':''}" onclick="sel('cat','${c.n}')"><span class="cat-icon">${c.i}</span><span class="cat-name">${c.n}</span></div>`).join('');
-    const accGrid = document.getElementById('accountGrid');
-    accGrid.innerHTML = ACCOUNTS.map(a => `<div class="account-item ${selAcc==a.n?'active':''}" onclick="sel('acc','${a.n}')"><span class="cat-icon">${a.i}</span><span class="cat-name">${a.n}</span></div>`).join('');
-    const list = document.getElementById('ledgerList');
-    list.innerHTML = records.map(r => `<div class="ledger-item" style="font-size:14px; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;"><b>${r.date}</b> | ${r.cat} - ${r.acct}<br><span style="color:#8e8e93">${r.desc}</span><span style="float:right;color:#ff3b30;font-weight:bold">¥${r.amt.toFixed(2)}</span></div>`).join('');
-    document.getElementById('dateTriggerBtn').innerText = `📅 ${selDate.toLocaleDateString()}`;
+    
+    document.getElementById('catGrid').innerHTML = CATEGORIES.map(c => `
+      <div class="cat-item ${selCat==c.name?'active':''}" onclick="sel('cat','${c.name}')">
+        <span class="cat-icon">${c.icon}</span><span class="cat-name">${c.name}</span>
+      </div>`).join('');
+    
+    document.getElementById('accountGrid').innerHTML = ACCOUNTS.map(a => `
+      <div class="account-item ${selAcc==a.name?'active':''}" onclick="sel('acc','${a.name}')">
+        <span class="cat-icon">${a.icon}</span><span class="cat-name">${a.name}</span>
+      </div>`).join('');
+
+    document.getElementById('ledgerList').innerHTML = records.map(r => `
+      <div class="ledger-item">
+        <div style="font-size:12px; color:#8e8e93; margin-bottom:4px">${r.date}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <span><b>${r.cat}</b> <small>(${r.acct})</small></span>
+          <span style="color:#ff3b30; font-weight:700">¥${r.amt.toFixed(2)}</span>
+        </div>
+        <div style="font-size:14px; margin-top:4px">${r.desc}</div>
+      </div>`).join('');
+
+    document.getElementById('dateTriggerBtn').innerText = `📅 ${selDate.getFullYear()}.${selDate.getMonth()+1}.${selDate.getDate()}`;
   }
 
-  function sel(type, val) { if(type=='cat') selCat=val; else selAcc=val; renderAll(); }
+  function sel(t, v) { if(t=='cat') selCat=v; else selAcc=v; renderAll(); }
   function inputNum(n) { if(currentAmt==="0" && n!=".") currentAmt=n; else currentAmt+=n; renderAll(); }
   function inputAction(a) { if(a=='clear') currentAmt="0"; else currentAmt=currentAmt.slice(0,-1)|| "0"; renderAll(); }
   
@@ -272,16 +276,11 @@
 
   function refreshSummary() {
     const table = document.getElementById('summaryTable');
-    let total = 0;
-    let catMap = {};
-    records.forEach(r => {
-      total += r.amt;
-      catMap[r.cat] = (catMap[r.cat] || 0) + r.amt;
-    });
-    let html = `<div style="text-align:center; padding:20px; background:#fff2e6; border-radius:16px; margin-bottom:20px;"><div style="font-size:14px; color:#8e8e93">总支出</div><div style="font-size:32px; font-weight:bold; color:#ff9f0a">¥${total.toFixed(2)}</div></div>`;
-    for(let k in catMap) {
-      html += `<div class="table-row"><span>${k}</span><b>¥${catMap[k].toFixed(2)}</b></div>`;
-    }
+    let total = 0, catMap = {};
+    records.forEach(r => { total += r.amt; catMap[r.cat] = (catMap[r.cat] || 0) + r.amt; });
+    let html = `<div style="text-align:center; padding:20px; background:#fff2e6; border-radius:16px; margin-bottom:20px;">
+      <div style="font-size:14px; color:#8e8e93">总支出</div><div style="font-size:32px; font-weight:bold; color:#ff9f0a">¥${total.toFixed(2)}</div></div>`;
+    for(let k in catMap) html += `<div class="table-row"><span>${k}</span><b>¥${catMap[k].toFixed(2)}</b></div>`;
     table.innerHTML = html;
   }
 
