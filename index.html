@@ -60,10 +60,18 @@
     transform: translateX(100%);
     z-index: 1;
   }
-  .page-main.slide-out {
+  .page-ledger {
+    transform: translateX(100%);
+    z-index: 1;
+  }
+  .page-main.slide-out-left {
     transform: translateX(-100%);
   }
   .page-summary.slide-in {
+    transform: translateX(0);
+    z-index: 3;
+  }
+  .page-ledger.slide-in {
     transform: translateX(0);
     z-index: 3;
   }
@@ -78,6 +86,10 @@
     border-bottom: 1px solid #efeff4;
     flex-shrink: 0;
   }
+  .top-bar-left {
+    display: flex;
+    gap: 8px;
+  }
   .date-picker {
     background: #f2f2f6;
     padding: 6px 14px;
@@ -89,12 +101,12 @@
     cursor: pointer;
     font-family: inherit;
   }
-  .summary-btn {
+  .nav-btn {
     background: none;
     border: none;
-    font-size: 18px;
+    font-size: 16px;
     cursor: pointer;
-    padding: 6px 10px;
+    padding: 6px 12px;
     color: #ff9f0a;
     font-weight: 500;
   }
@@ -245,7 +257,7 @@
   }
 
   /* 汇总页面样式 */
-  .summary-header {
+  .summary-header, .ledger-header {
     display: flex;
     align-items: center;
     padding: 12px 16px;
@@ -262,7 +274,7 @@
     cursor: pointer;
     font-family: inherit;
   }
-  .summary-title {
+  .page-title {
     font-size: 18px;
     font-weight: 600;
     flex: 1;
@@ -287,7 +299,7 @@
     background: #ff9f0a;
     color: white;
   }
-  .summary-table {
+  .summary-table, .ledger-list {
     flex: 1;
     overflow-y: auto;
     padding: 12px 16px;
@@ -311,37 +323,151 @@
     color: #ff3b30;
     font-family: monospace;
   }
-  .total-row {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 2px solid #e9e9ef;
-    font-weight: 700;
-  }
   .empty-summary {
     text-align: center;
     color: #aeaeb2;
     padding: 40px;
   }
 
-  /* Toast 提示 - 底部短时显示 */
+  /* 流水页面样式 */
+  .ledger-item {
+    background: #f9f9fb;
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #e9e9ef;
+  }
+  .ledger-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .ledger-date {
+    font-size: 12px;
+    color: #8e8e93;
+  }
+  .ledger-amount {
+    font-weight: 700;
+    color: #ff3b30;
+    font-size: 16px;
+  }
+  .ledger-detail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .ledger-cat {
+    background: #e9e9ef;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+  }
+  .ledger-acct {
+    font-size: 11px;
+    color: #8e8e93;
+  }
+  .ledger-desc {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+  }
+  .ledger-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    border-top: 1px solid #e9e9ef;
+    padding-top: 10px;
+    margin-top: 6px;
+  }
+  .edit-btn, .delete-btn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .edit-btn {
+    color: #ff9f0a;
+    background: #fff2e6;
+  }
+  .delete-btn {
+    color: #ff3b30;
+    background: #ffe6e5;
+  }
+
+  /* 编辑弹窗 */
+  .edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+  .edit-card {
+    background: white;
+    margin: 20px;
+    padding: 20px;
+    border-radius: 28px;
+    width: calc(100% - 40px);
+    max-width: 400px;
+  }
+  .edit-card input, .edit-card select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #e9e9ef;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .edit-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .edit-actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .save-btn {
+    background: #ff9f0a;
+    color: white;
+  }
+  .cancel-btn {
+    background: #e9e9ef;
+  }
+
   .toast {
     position: fixed;
-    bottom: 80px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background: #1c1c1e;
+    background: rgba(28, 28, 30, 0.9);
     color: white;
-    padding: 6px 16px;
-    border-radius: 30px;
-    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
     opacity: 0;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     pointer-events: none;
     z-index: 1000;
     white-space: nowrap;
+    backdrop-filter: blur(4px);
   }
   .toast.show {
-    opacity: 0.9;
+    opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
 
@@ -374,9 +500,12 @@
   <!-- 主页面 -->
   <div id="mainPage" class="page page-main">
     <div class="top-bar">
-      <button class="date-picker" id="dateTriggerBtn">📅 今天</button>
+      <div class="top-bar-left">
+        <button class="nav-btn" id="openLedgerBtn">📋 流水</button>
+        <button class="nav-btn" id="openSummaryBtn">📊 汇总</button>
+      </div>
       <div>
-        <button class="summary-btn" id="openSummaryBtn">📊 汇总</button>
+        <button class="date-picker" id="dateTriggerBtn">📅 今天</button>
         <button class="backup-btn" id="manualBackupBtn" title="备份">💾</button>
       </div>
     </div>
@@ -425,7 +554,7 @@
   <div id="summaryPage" class="page page-summary">
     <div class="summary-header">
       <button class="back-btn" id="closeSummaryBtn">← 返回</button>
-      <span class="summary-title">📊 汇总</span>
+      <span class="page-title">📊 汇总</span>
       <div style="width: 60px;"></div>
     </div>
     <div class="filter-bar">
@@ -437,6 +566,18 @@
       <button class="filter-btn active" data-group="account">按账户</button>
     </div>
     <div class="summary-table" id="summaryTable">
+      <div class="empty-summary">加载中...</div>
+    </div>
+  </div>
+
+  <!-- 流水页面 -->
+  <div id="ledgerPage" class="page page-ledger">
+    <div class="ledger-header">
+      <button class="back-btn" id="closeLedgerBtn">← 返回</button>
+      <span class="page-title">📋 流水账</span>
+      <div style="width: 60px;"></div>
+    </div>
+    <div class="ledger-list" id="ledgerList">
       <div class="empty-summary">加载中...</div>
     </div>
   </div>
@@ -454,7 +595,7 @@
     { name: "日用", icon: "🧴" }, { name: "其他", icon: "📦" }
   ];
 
-  // 账户配置（微信logo）
+  // 账户配置
   const ACCOUNTS = [
     { name: "现金", icon: "💵" },
     { name: "信用卡", icon: "💳" },
@@ -469,14 +610,12 @@
   let selectedAccount = "现金";
   let currentDate = new Date();
 
-  // 汇总页状态
+  // 页面状态
   let summaryType = "month";
   let summaryGroup = "account";
 
-  // Toast 定时器
   let toastTimer = null;
 
-  // 显示提示（底部，1秒后消失）
   function showToast(msg) {
     const toast = document.getElementById('toast');
     if (toastTimer) clearTimeout(toastTimer);
@@ -484,15 +623,15 @@
     toast.classList.add('show');
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
-    }, 1000);
+    }, 800);
   }
 
-  // 注册 Service Worker
+  // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
   }
 
-  // PWA 安装提示
+  // PWA 安装
   let deferredPrompt;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -508,22 +647,31 @@
   });
 
   // 页面切换
+  function hideAllPages() {
+    document.getElementById('mainPage').classList.remove('slide-out-left');
+    document.getElementById('summaryPage').classList.remove('slide-in');
+    document.getElementById('ledgerPage').classList.remove('slide-in');
+  }
+
   function showMainPage() {
-    const mainPage = document.getElementById('mainPage');
-    const summaryPage = document.getElementById('summaryPage');
-    mainPage.classList.remove('slide-out');
-    summaryPage.classList.remove('slide-in');
+    hideAllPages();
   }
 
   function showSummaryPage() {
-    const mainPage = document.getElementById('mainPage');
-    const summaryPage = document.getElementById('summaryPage');
-    mainPage.classList.add('slide-out');
-    summaryPage.classList.add('slide-in');
+    hideAllPages();
+    document.getElementById('mainPage').classList.add('slide-out-left');
+    document.getElementById('summaryPage').classList.add('slide-in');
     refreshSummary();
   }
 
-  // 初始化数据库
+  function showLedgerPage() {
+    hideAllPages();
+    document.getElementById('mainPage').classList.add('slide-out-left');
+    document.getElementById('ledgerPage').classList.add('slide-in');
+    renderLedgerList();
+  }
+
+  // 数据库
   const request = indexedDB.open("ledger_pwa", 1);
   request.onupgradeneeded = e => {
     db = e.target.result;
@@ -540,7 +688,9 @@
     const tx = db.transaction("records", "readonly");
     const req = tx.objectStore("records").getAll();
     req.onsuccess = () => {
+      // 按时间倒序（最新在上）
       records = req.result.sort((a,b) => b.date.localeCompare(a.date));
+      renderLedgerList();
     };
   }
 
@@ -548,7 +698,20 @@
     return records;
   }
 
-  // 渲染分类按钮
+  // 重新加载并刷新所有相关界面
+  function refreshAll() {
+    const tx = db.transaction("records", "readonly");
+    const req = tx.objectStore("records").getAll();
+    req.onsuccess = () => {
+      records = req.result.sort((a,b) => b.date.localeCompare(a.date));
+      renderLedgerList();
+      if (document.getElementById('summaryPage').classList.contains('slide-in')) {
+        refreshSummary();
+      }
+    };
+  }
+
+  // 渲染分类
   function renderCatButtons() {
     const grid = document.getElementById('catGrid');
     grid.innerHTML = CATEGORIES.map(cat => `
@@ -568,7 +731,7 @@
     document.querySelector('.cat-item')?.classList.add('active');
   }
 
-  // 渲染账户按钮
+  // 渲染账户
   function renderAccountButtons() {
     const grid = document.getElementById('accountGrid');
     grid.innerHTML = ACCOUNTS.map(acc => `
@@ -589,7 +752,7 @@
     if (defaultAccount) defaultAccount.classList.add('active');
   }
 
-  // 键盘逻辑
+  // 键盘
   function setupKeyboard() {
     const amountDisplay = document.getElementById('amountDisplay');
     function updateDisplay() {
@@ -628,9 +791,9 @@
     const amount = parseFloat(currentAmount);
     const purpose = document.getElementById('purposeInput').value.trim();
     
-    if (isNaN(amount) || amount <= 0) { showToast("请输入金额"); return; }
-    if (!selectedCategory) { showToast("请选择分类"); return; }
-    if (!purpose) { showToast("请填写用途"); return; }
+    if (isNaN(amount) || amount <= 0) { showToast("金额"); return; }
+    if (!selectedCategory) { showToast("分类"); return; }
+    if (!purpose) { showToast("用途"); return; }
     
     const dateStr = currentDate.toISOString().split('T')[0];
     const record = {
@@ -651,15 +814,122 @@
       currentAmount = "0";
       document.getElementById('amountDisplay').innerText = "0.00";
       showToast(`¥${amount.toFixed(2)}`);
+      renderLedgerList();
       performAutoBackup();
     };
   }
 
-  // 自动备份（不弹出额外提示，静默下载）
+  // 删除记录
+  function deleteRecord(id) {
+    if (!confirm('确定删除这条记录吗？')) return;
+    const tx = db.transaction("records", "readwrite");
+    tx.objectStore("records").delete(id);
+    tx.oncomplete = () => {
+      records = records.filter(r => r.id !== id);
+      renderLedgerList();
+      if (document.getElementById('summaryPage').classList.contains('slide-in')) {
+        refreshSummary();
+      }
+      showToast("已删除");
+      performAutoBackup();
+    };
+  }
+
+  // 编辑记录
+  function editRecord(record) {
+    const modal = document.createElement('div');
+    modal.className = 'edit-modal';
+    modal.innerHTML = `
+      <div class="edit-card">
+        <h3 style="margin:0 0 16px">编辑记录</h3>
+        <input type="date" id="edit-date" value="${record.date}">
+        <select id="edit-cat">${CATEGORIES.map(c => `<option ${c.name === record.cat ? 'selected' : ''} value="${c.name}">${c.name}</option>`).join('')}</select>
+        <select id="edit-acct">${ACCOUNTS.map(a => `<option ${a.name === record.acct ? 'selected' : ''} value="${a.name}">${a.name}</option>`).join('')}</select>
+        <input type="text" id="edit-desc" value="${escapeHtml(record.desc)}" placeholder="用途">
+        <input type="number" id="edit-amount" value="${record.amount}" step="0.01" placeholder="金额">
+        <div class="edit-actions">
+          <button class="cancel-btn" id="edit-cancel">取消</button>
+          <button class="save-btn" id="edit-save">保存</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    modal.querySelector('#edit-cancel').onclick = () => modal.remove();
+    modal.querySelector('#edit-save').onclick = () => {
+      const newDate = modal.querySelector('#edit-date').value;
+      const newCat = modal.querySelector('#edit-cat').value;
+      const newAcct = modal.querySelector('#edit-acct').value;
+      const newDesc = modal.querySelector('#edit-desc').value.trim();
+      const newAmount = parseFloat(modal.querySelector('#edit-amount').value);
+      
+      if (!newDate || !newDesc || isNaN(newAmount) || newAmount <= 0) {
+        showToast("请完整填写");
+        return;
+      }
+      
+      const updatedRecord = {
+        ...record,
+        date: newDate,
+        cat: newCat,
+        acct: newAcct,
+        desc: newDesc,
+        amount: newAmount
+      };
+      
+      const tx = db.transaction("records", "readwrite");
+      tx.objectStore("records").put(updatedRecord);
+      tx.oncomplete = () => {
+        modal.remove();
+        refreshAll();
+        showToast("已修改");
+        performAutoBackup();
+      };
+    };
+  }
+
+  // 渲染流水列表（时间倒序）
+  function renderLedgerList() {
+    const container = document.getElementById('ledgerList');
+    if (!records.length) {
+      container.innerHTML = '<div class="empty-summary">暂无记录</div>';
+      return;
+    }
+    container.innerHTML = records.map(r => `
+      <div class="ledger-item">
+        <div class="ledger-item-header">
+          <span class="ledger-date">${r.date}</span>
+          <span class="ledger-amount">-¥${r.amount.toFixed(2)}</span>
+        </div>
+        <div class="ledger-detail">
+          <span class="ledger-cat">${r.cat}</span>
+          <span class="ledger-acct">${r.acct}</span>
+          <span class="ledger-desc">${escapeHtml(r.desc)}</span>
+        </div>
+        <div class="ledger-actions">
+          <button class="edit-btn" onclick="window.editRecordById(${r.id})">✏️ 编辑</button>
+          <button class="delete-btn" onclick="window.deleteRecordById(${r.id})">🗑️ 删除</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // 挂载到 window 供 onclick 调用
+  window.editRecordById = (id) => {
+    const record = records.find(r => r.id === id);
+    if (record) editRecord(record);
+  };
+  window.deleteRecordById = (id) => {
+    deleteRecord(id);
+  };
+
+  // 自动备份（时间正序）
   function performAutoBackup() {
     if (!records.length) return;
     try {
-      const backupData = { time: new Date().toISOString(), records };
+      // 备份时按时间正序（旧的在前面）
+      const sortedForBackup = [...records].sort((a,b) => a.date.localeCompare(b.date));
+      const backupData = { time: new Date().toISOString(), records: sortedForBackup };
       const jsonStr = JSON.stringify(backupData, null, 2);
       const blob = new Blob([jsonStr], {type: "application/json"});
       const url = URL.createObjectURL(blob);
@@ -680,8 +950,12 @@
   }
 
   function manualBackup() { 
-    performAutoBackup(); 
-    showToast("备份完成"); 
+    if (!records.length) {
+      showToast("无数据");
+      return;
+    }
+    performAutoBackup();
+    showToast("已备份");
   }
 
   // 汇总功能
@@ -692,50 +966,44 @@
       return;
     }
 
-    let groupedData = {};
-    let today = new Date();
-    
     if (summaryType === 'day') {
       const last7Days = [];
+      const today = new Date();
       for (let i = 0; i < 7; i++) {
         const d = new Date();
         d.setDate(today.getDate() - i);
         const dateKey = d.toISOString().split('T')[0];
         last7Days.unshift(dateKey);
       }
-      
+      const groupedData = {};
       last7Days.forEach(date => { groupedData[date] = 0; });
-      
       allRecords.forEach(record => {
         if (groupedData[record.date] !== undefined) {
           groupedData[record.date] += record.amount;
         }
       });
-      
       let html = `<div class="table-row table-header"><span>日期</span><span>支出</span></div>`;
       for (let [date, amount] of Object.entries(groupedData)) {
         html += `<div class="table-row"><span class="table-name">${date}</span><span class="table-amount">¥${amount.toFixed(2)}</span></div>`;
       }
       document.getElementById('summaryTable').innerHTML = html;
-      
     } else if (summaryType === 'month') {
       const last6Months = [];
+      const today = new Date();
       for (let i = 0; i < 6; i++) {
         const d = new Date();
         d.setMonth(today.getMonth() - i);
         const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         last6Months.unshift(monthKey);
       }
-      
+      const groupedData = {};
       last6Months.forEach(month => { groupedData[month] = 0; });
-      
       allRecords.forEach(record => {
         const recordMonth = record.date.substring(0, 7);
         if (groupedData[recordMonth] !== undefined) {
           groupedData[recordMonth] += record.amount;
         }
       });
-      
       let html = `<div class="table-row table-header"><span>月份</span><span>支出</span></div>`;
       for (let [month, amount] of Object.entries(groupedData)) {
         const displayMonth = month.replace('-', '年') + '月';
@@ -743,18 +1011,15 @@
       }
       document.getElementById('summaryTable').innerHTML = html;
     }
-    
-    // 按分类或账户重新汇总
+
     if (summaryGroup === 'category') {
       const categoryMap = {};
       CATEGORIES.forEach(cat => { categoryMap[cat.name] = 0; });
-      
       allRecords.forEach(record => {
         if (categoryMap[record.cat] !== undefined) {
           categoryMap[record.cat] += record.amount;
         }
       });
-      
       let html = `<div class="table-row table-header"><span>分类</span><span>支出</span></div>`;
       for (let [cat, amount] of Object.entries(categoryMap)) {
         if (amount > 0) {
@@ -762,17 +1027,14 @@
         }
       }
       document.getElementById('summaryTable').innerHTML = html;
-      
     } else if (summaryGroup === 'account') {
       const accountMap = {};
       ACCOUNTS.forEach(acc => { accountMap[acc.name] = 0; });
-      
       allRecords.forEach(record => {
         if (accountMap[record.acct] !== undefined) {
           accountMap[record.acct] += record.amount;
         }
       });
-      
       let html = `<div class="table-row table-header"><span>账户</span><span>支出</span></div>`;
       for (let [acc, amount] of Object.entries(accountMap)) {
         if (amount > 0) {
@@ -787,28 +1049,24 @@
   function setupDatePicker() {
     const dateBtn = document.getElementById('dateTriggerBtn');
     const hiddenPicker = document.getElementById('hiddenDatePicker');
-    
     function updateDateBtn() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
       const day = currentDate.getDate();
       dateBtn.innerText = `📅 ${year}.${month}.${day}`;
     }
-    
     dateBtn.addEventListener('click', () => {
       hiddenPicker.value = currentDate.toISOString().split('T')[0];
       hiddenPicker.showPicker();
     });
-    
     hiddenPicker.addEventListener('change', (e) => {
       currentDate = new Date(e.target.value);
       updateDateBtn();
     });
-    
     updateDateBtn();
   }
 
-  // 初始化汇总页按钮
+  // 汇总按钮
   function initSummaryButtons() {
     document.querySelectorAll('.filter-btn[data-type]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -818,7 +1076,6 @@
         refreshSummary();
       });
     });
-    
     document.querySelectorAll('.filter-btn[data-group]').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn[data-group]').forEach(b => b.classList.remove('active'));
@@ -829,7 +1086,6 @@
     });
   }
 
-  // 初始化
   renderCatButtons();
   renderAccountButtons();
   setupKeyboard();
@@ -839,6 +1095,10 @@
   document.getElementById('manualBackupBtn').addEventListener('click', manualBackup);
   document.getElementById('openSummaryBtn').addEventListener('click', showSummaryPage);
   document.getElementById('closeSummaryBtn').addEventListener('click', showMainPage);
+  document.getElementById('openLedgerBtn').addEventListener('click', showLedgerPage);
+  document.getElementById('closeLedgerBtn').addEventListener('click', showMainPage);
+
+  function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 </script>
 </body>
 </html>
