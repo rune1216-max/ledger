@@ -4,167 +4,127 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>记账本</title>
+<title>记账本 | LEDGER</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap');
+  
   :root {
     --ink: #1a1a1a; --paper: #f5f0e8; --cream: #ede8da;
     --accent: #c0392b; --accent2: #2980b9; --green: #27ae60;
     --muted: #8a8070; --border: #c8bfaa; --shadow: rgba(0,0,0,0.08);
-    --safe-top: env(safe-area-inset-top,20px); --safe-bottom: env(safe-area-inset-bottom,20px);
+    --safe-top: env(safe-area-inset-top, 20px);
+    --safe-bottom: env(safe-area-inset-bottom, 20px);
   }
+
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
     margin: 0; background: var(--paper); color: var(--ink);
     font-family: 'Noto Serif SC', serif; line-height: 1.6;
     padding-top: var(--safe-top); padding-bottom: calc(var(--safe-bottom) + 80px);
   }
-  /* 这里的样式与你原版一致 */
-  header { padding: 30px 20px 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; }
-  h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -1px; }
-  .sync-btn { background: none; border: 1px solid var(--border); padding: 4px 8px; font-size: 12px; border-radius: 4px; color: var(--muted); cursor: pointer; }
-  
+
+  header { padding: 40px 20px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; }
+  h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; }
+  .sync-btn { background: none; border: 1px solid var(--border); padding: 5px 10px; font-size: 11px; border-radius: 4px; color: var(--muted); cursor: pointer; font-family: 'Space Mono'; text-transform: uppercase; }
+
   .container { padding: 20px; max-width: 600px; margin: 0 auto; }
-  .card { background: var(--cream); border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; position: relative; }
-  label { display: block; font-size: 12px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
-  input, select, textarea {
-    width: 100%; background: none; border: none; border-bottom: 1px solid var(--border);
-    padding: 10px 0; font-family: inherit; font-size: 16px; color: var(--ink); margin-bottom: 20px; outline: none;
-  }
-  .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  button.primary { background: var(--ink); color: white; border: none; padding: 15px; font-size: 16px; font-weight: 600; cursor: pointer; }
-  button.secondary { background: none; border: 1px solid var(--border); color: var(--ink); padding: 15px; font-size: 16px; cursor: pointer; }
+  .card { background: var(--cream); border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; box-shadow: 6px 6px 0 var(--border); }
   
-  .record-item { padding: 15px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center; }
-  .record-info { flex: 1; }
-  .record-date { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted); }
-  .record-desc { font-weight: 600; font-size: 16px; }
-  .record-cat { font-size: 12px; color: var(--muted); background: var(--border); padding: 1px 6px; border-radius: 2px; margin-left: 5px; }
-  .amount-out { color: var(--accent); font-weight: 700; }
-  .amount-in { color: var(--green); font-weight: 700; }
-
-  /* GitHub 设置弹窗样式 */
-  #gh-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(4px); }
-  .modal-content { background: var(--paper); padding: 25px; width: 85%; max-width: 400px; border: 1px solid var(--ink); box-shadow: 10px 10px 0 var(--ink); }
-  .gh-input { width:100%; margin-bottom: 15px; padding:10px; border:1px solid var(--border); background: var(--cream); }
-
-  /* Toast 提示 */
-  #toast {
-    position: fixed; bottom: calc(var(--safe-bottom) + 90px); left: 50%; 
-    transform: translateX(-50%) translateY(20px);
-    padding: 10px 20px; font-size: 13px; font-family: 'Space Mono', monospace;
-    border: 1px solid var(--ink); background: var(--ink); color: white;
-    opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
-    white-space: nowrap; z-index: 9999; border-radius: 2px;
+  label { display: block; font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 700; letter-spacing: 1px; }
+  input, select {
+    width: 100%; background: none; border: none; border-bottom: 1px solid var(--border);
+    padding: 12px 0; font-family: inherit; font-size: 18px; color: var(--ink); margin-bottom: 24px; outline: none; border-radius: 0;
   }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  #toast.success { background: var(--green); border-color: var(--green); }
-  #toast.error { background: var(--accent); border-color: var(--accent); }
+
+  .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  button.primary { background: var(--ink); color: white; border: none; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+  button.secondary { background: none; border: 1px solid var(--ink); color: var(--ink); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  button:active { transform: scale(0.98); opacity: 0.8; }
+
+  .record-item { padding: 20px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .record-date { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .record-desc { font-weight: 600; font-size: 17px; display: flex; align-items: center; }
+  .record-cat { font-size: 11px; color: var(--muted); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; margin-left: 8px; font-weight: 400; }
+  .amount-out { color: var(--accent); font-weight: 700; font-family: 'Space Mono'; }
+  .amount-in { color: var(--green); font-weight: 700; font-family: 'Space Mono'; }
+
+  /* GitHub Modal */
+  #gh-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(26,26,26,0.9); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
+  .modal-content { background: var(--paper); padding: 30px; width: 90%; max-width: 400px; border: 1px solid var(--ink); box-shadow: 12px 12px 0 var(--ink); }
+  .gh-input { width:100%; margin-bottom: 15px; padding:12px; border:1px solid var(--border); background: var(--cream); font-size: 14px; font-family: 'Space Mono'; }
+  
+  #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; padding: 10px 20px; font-size: 12px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 3000; }
 </style>
 </head>
 <body>
 
 <header>
   <div>
-    <div style="font-family:'Space Mono'; font-size:12px; color:var(--muted)">LEDGER_v2.0</div>
+    <div style="font-family:'Space Mono'; font-size:12px; color:var(--muted); margin-bottom:4px;">SYNC_ENABLED_v2.1</div>
     <h1>流水账</h1>
   </div>
-  <button class="sync-btn" onclick="toggleGHModal()">⚙️ 同步设置</button>
+  <button class="sync-btn" onclick="toggleGHModal()">⚙️ Sync_Config</button>
 </header>
 
 <div class="container">
   <div class="card">
-    <!-- 第一行：日期 + 收入/支出切换 -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:end;">
-      <div>
-        <label>日期</label>
-        <input type="date" id="date">
-      </div>
-      <div>
-        <label>类型</label>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px;">
-          <button id="btn-out" class="primary" onclick="setType('out')" style="padding:10px; font-size:14px;">支出</button>
-          <button id="btn-in" class="secondary" onclick="setType('in')" style="padding:10px; font-size:14px;">收入</button>
-        </div>
-      </div>
+    <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:20px;">
+      <div><label>日期</label><input type="date" id="date"></div>
+      <div><label>金额</label><input type="number" id="amount" step="0.01" placeholder="0.00"></div>
     </div>
-    <!-- 第二行：分类 + 账户 -->
+    <label>内容</label>
+    <input type="text" id="desc" placeholder="吃了什么？买了什么？">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-      <div>
-        <label>分类</label>
-        <select id="cat"></select>
-      </div>
+      <div><label>分类</label><select id="cat"></select></div>
       <div>
         <label>账户</label>
         <select id="acct">
-          <option value="现金">现金</option>
+          <option value="银行卡">澳洲银行卡</option>
+          <option value="现金">现金 (AUD/CNY)</option>
           <option value="支付宝">支付宝</option>
-          <option value="微信">微信</option>
-          <option value="银行卡">银行卡</option>
+          <option value="微信">微信支付</option>
         </select>
       </div>
     </div>
-    <!-- 第三行：内容 -->
-    <label>内容</label>
-    <input type="text" id="desc" placeholder="买了什么？">
-    <!-- 第四行：金额 + 提交 -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:end;">
-      <div>
-        <label>金额</label>
-        <input type="number" id="amount" step="0.01" placeholder="0.00" style="margin-bottom:0;">
-      </div>
-      <button class="primary" onclick="addRecord(currentType)" style="padding:15px; margin-bottom:0;">记录</button>
+    <div class="btn-group">
+      <button class="secondary" onclick="addRecord('in')">收入 (+)</button>
+      <button class="primary" onclick="addRecord('out')">支出 (-)</button>
     </div>
   </div>
 
   <div style="margin-top:40px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-      <select id="month-select" style="width:auto; margin:0; border:none; font-weight:700;" onchange="render()"></select>
-      <button class="sync-btn" onclick="exportExcel()">导出 EXCEL</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <select id="month-select" style="width:auto; margin:0; border:none; font-weight:700; font-size:20px;" onchange="render()"></select>
+      <button class="sync-btn" onclick="exportExcel()">Export .xlsx</button>
     </div>
     <div id="list"></div>
   </div>
 </div>
 
-<div id="toast"></div>
-
 <div id="gh-modal">
   <div class="modal-content">
-    <h2 style="margin-top:0">云端备份配置</h2>
-    <label>GitHub Token</label>
+    <h2 style="margin:0 0 20px; font-family:'Space Mono';">CLOUD_CONFIG</h2>
+    <label>GitHub Token (Fine-grained)</label>
     <input type="password" id="gh-token" class="gh-input" placeholder="github_pat_...">
-    <label>私有仓库路径</label>
-    <input type="text" id="gh-repo" class="gh-input" placeholder="用户名/仓库名">
-    <button class="primary" style="width:100%" onclick="saveGHSettings()">保存并同步</button>
-    <button class="secondary" style="width:100%; margin-top:10px;" onclick="restoreFromGH()">从云端恢复到本地</button>
-    <button class="sync-btn" style="width:100%; margin-top:15px; border:none;" onclick="toggleGHModal()">返回</button>
+    <label>Private Repo Path</label>
+    <input type="text" id="gh-repo" class="gh-input" placeholder="rune1216-max/my-ledger-data">
+    <button class="primary" style="width:100%" onclick="saveGHSettings()">SAVE & SYNC NOW</button>
+    <button class="secondary" style="width:100%; margin-top:12px; border-color:var(--accent2); color:var(--accent2);" onclick="restoreFromGH()">RESTORE FROM CLOUD</button>
+    <button class="sync-btn" style="width:100%; margin-top:20px; border:none;" onclick="toggleGHModal()">CLOSE</button>
   </div>
 </div>
 
+<div id="toast">已同步至云端</div>
+
 <script>
 const CATS_OUT = ['餐饮','购物','交通','娱乐','居家','医疗','教育','其他'];
-const CATS_IN = ['工资','奖金','理财','红包','其他'];
+const CATS_IN = ['工资','奖金','理财','理赔','其他'];
 
 let db;
 let records = [];
-let currentType = 'out';
 
-function setType(type) {
-  currentType = type;
-  const btnOut = document.getElementById('btn-out');
-  const btnIn = document.getElementById('btn-in');
-  if(type === 'out') {
-    btnOut.className = 'primary'; btnIn.className = 'secondary';
-  } else {
-    btnOut.className = 'secondary'; btnIn.className = 'primary';
-  }
-  const cats = type === 'out' ? CATS_OUT : CATS_IN;
-  const catSel = document.getElementById('cat');
-  catSel.innerHTML = '<option value="" disabled selected>请选择</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
-}
-
-// 初始化数据库
+// IndexedDB 初始化
 const request = indexedDB.open("ledger_db", 2);
 request.onupgradeneeded = e => {
   db = e.target.result;
@@ -188,20 +148,18 @@ function loadRecords() {
   };
 }
 
-// 保存记录并触发同步
+// 记账逻辑
 async function addRecord(type) {
   const amt = parseFloat(document.getElementById('amount').value);
   const desc = document.getElementById('desc').value;
-  const cat = document.getElementById('cat').value;
-  if(!amt || !desc) return alert('请填写完整');
-  if(!cat) return alert('请选择分类');
+  if(!amt || !desc) return alert('请填写完整信息');
   
   const record = {
     id: Date.now(),
     date: document.getElementById('date').value,
     amount: amt,
     desc: desc,
-    cat: cat,
+    cat: document.getElementById('cat').value,
     acct: document.getElementById('acct').value,
     type: type
   };
@@ -211,104 +169,70 @@ async function addRecord(type) {
   tx.oncomplete = () => {
     records.unshift(record);
     render();
-    // 自动同步到 GitHub
     if(localStorage.getItem('gh_token')) syncToGitHub();
-    
     document.getElementById('amount').value = '';
     document.getElementById('desc').value = '';
   };
 }
 
-// Toast 提示
-let toastTimer;
-function showToast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.className = ''; }, 3000);
-}
-
-// GitHub 同步逻辑
+// GitHub 同步核心 (针对澳洲网络和中文优化)
 async function syncToGitHub() {
-  const token = localStorage.getItem('gh_token');
-  const repo = localStorage.getItem('gh_repo');
+  const token = localStorage.getItem('gh_token')?.trim();
+  const repo = localStorage.getItem('gh_repo')?.trim();
   if(!token || !repo) return;
 
   const url = `https://api.github.com/repos/${repo}/contents/data.json`;
+  
   try {
-    showToast('⏳ 同步中...', '');
-
-    // 第一步：尝试获取现有文件的 sha
     const getRes = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'Cache-Control': 'no-cache'
-      }
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' }
     });
-
+    
     let sha = "";
     if (getRes.ok) {
       const fileData = await getRes.json();
       sha = fileData.sha;
-    } else if (getRes.status !== 404) {
-      // 404 表示文件不存在（首次同步），其他错误才报警
-      const errData = await getRes.json().catch(() => ({}));
-      showToast('❌ 读取失败 ' + getRes.status + '：' + (errData.message || ''), 'error');
-      return;
     }
 
-    // 第二步：写入文件
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(records))));
-    const body = {
-      message: `Sync ${new Date().toLocaleString()}`,
-      content: content,
-    };
-    if (sha) body.sha = sha;
+    // 处理中文 Base64 编码
+    const jsonStr = JSON.stringify(records);
+    const uint8Array = new TextEncoder().encode(jsonStr);
+    const binString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join("");
+    const b64Content = btoa(binString);
 
     const putRes = await fetch(url, {
       method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `Sync: ${new Date().toLocaleString()}`,
+        content: b64Content,
+        sha: sha || undefined
+      })
     });
 
-    if (putRes.ok) {
-      showToast('✅ 同步成功', 'success');
-    } else {
-      const errData = await putRes.json().catch(() => ({}));
-      showToast('❌ 写入失败 ' + putRes.status + '：' + (errData.message || ''), 'error');
-    }
+    if(putRes.ok) showToast("Cloud Synced ✓");
   } catch(e) {
-    showToast('❌ 网络错误：' + e.message, 'error');
     console.error(e);
+    showToast("Sync Error: " + e.message);
   }
 }
 
 async function restoreFromGH() {
-  const token = localStorage.getItem('gh_token');
-  const repo = localStorage.getItem('gh_repo');
+  const token = localStorage.getItem('gh_token')?.trim();
+  const repo = localStorage.getItem('gh_repo')?.trim();
   if(!token || !repo) return alert("请先配置设置");
-  if(!confirm("将用云端数据覆盖本地，确定吗？")) return;
+  if(!confirm("确定要用云端数据覆盖本地吗？此操作不可逆！")) return;
 
   try {
     const res = await fetch(`https://api.github.com/repos/${repo}/contents/data.json`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'Cache-Control': 'no-cache'
-      }
+      headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
     });
     if(res.ok) {
       const data = await res.json();
-      const cloudData = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+      // 解码中文 Base64
+      const binString = atob(data.content);
+      const uint8Array = Uint8Array.from(binString, char => char.charCodeAt(0));
+      const cloudData = JSON.parse(new TextDecoder().decode(uint8Array));
       
       const tx = db.transaction("records", "readwrite");
       const store = tx.objectStore("records");
@@ -316,15 +240,17 @@ async function restoreFromGH() {
       cloudData.forEach(r => store.add(r));
       tx.oncomplete = () => location.reload();
     } else {
-      const errData = await res.json().catch(() => ({}));
-      alert("恢复失败 " + res.status + "：" + (errData.message || '云端尚无备份文件'));
+      alert("云端未发现备份文件 data.json");
     }
-  } catch(e) { alert("恢复失败，请检查网络：" + e.message); }
+  } catch(e) {
+    alert("恢复失败: " + e.message);
+  }
 }
 
+// UI 辅助函数
 function toggleGHModal() {
   const m = document.getElementById('gh-modal');
-  m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+  m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
   if(m.style.display === 'flex') {
     document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
     document.getElementById('gh-repo').value = localStorage.getItem('gh_repo') || '';
@@ -334,11 +260,18 @@ function toggleGHModal() {
 function saveGHSettings() {
   localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
   localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
-  toggleGHModal();
-  syncToGitHub();
+  syncToGitHub().then(() => {
+    alert("设置已保存并尝试初始同步");
+    toggleGHModal();
+  });
 }
 
-// 基础 UI 渲染逻辑
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg; t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 2500);
+}
+
 function initFilters() {
   const dateInput = document.getElementById('date');
   if(!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
@@ -348,10 +281,10 @@ function initFilters() {
   if(!months.includes(currMonth)) months.unshift(currMonth);
   
   const sel = document.getElementById('month-select');
-  sel.innerHTML = months.sort().reverse().map(m => `<option value="${m}">${m.replace('-','年')}月</option>`).join('');
+  sel.innerHTML = months.sort().reverse().map(m => `<option value="${m}">${m.replace('-',' / ')}</option>`).join('');
   
-  // 初始化分类（不预选）
-  setType(currentType);
+  const catSel = document.getElementById('cat');
+  catSel.innerHTML = CATS_OUT.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
 function render() {
@@ -361,7 +294,7 @@ function render() {
   
   list.innerHTML = filtered.map(r => `
     <div class="record-item">
-      <div class="record-info">
+      <div>
         <div class="record-date">${r.date} · ${r.acct}</div>
         <div class="record-desc">${r.desc}<span class="record-cat">${r.cat}</span></div>
       </div>
@@ -378,8 +311,8 @@ function exportExcel() {
   if(!mR.length) return alert('该月无数据');
   const ws = XLSX.utils.json_to_sheet(mR);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "财务报表");
-  XLSX.writeFile(wb, `账本_${month}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, "Financial_Report");
+  XLSX.writeFile(wb, `Ledger_${month}.xlsx`);
 }
 </script>
 </body>
