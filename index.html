@@ -334,8 +334,8 @@ function toggleGHModal() {
 function saveGHSettings() {
   localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
   localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
-  syncToGitHub().then(() => alert('配置已保存并尝试同步'));
   toggleGHModal();
+  syncToGitHub();
 }
 
 // 基础 UI 渲染逻辑
