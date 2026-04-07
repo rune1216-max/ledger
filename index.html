@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<!-- 关键：让 iOS 识别为 Web App -->
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="记账本">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23ff9500'/%3E%3Ctext x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='Arial'%3E💰%3C/text%3E%3C/svg%3E">
 <title>记账本 | 计算器式记账</title>
 <style>
   * {
@@ -23,7 +27,6 @@
     overflow: hidden;
   }
   
-  /* 主容器 */
   .app {
     max-width: 500px;
     margin: 0 auto;
@@ -35,7 +38,86 @@
     position: relative;
   }
   
-  /* 头部显示区 */
+  /* 引导提示（首次访问显示） */
+  .guide-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    font-family: 'Arial Narrow', monospace;
+  }
+  .guide-card {
+    background: #1c1c1e;
+    margin: 30px;
+    padding: 28px 24px;
+    border-radius: 28px;
+    max-width: 320px;
+    text-align: center;
+    border: 1px solid #3a3a3c;
+  }
+  .guide-card h3 {
+    margin: 0 0 12px;
+    font-size: 20px;
+  }
+  .guide-card p {
+    font-size: 14px;
+    color: #aeaeb2;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  .guide-steps {
+    background: #2c2c2e;
+    border-radius: 16px;
+    padding: 16px;
+    text-align: left;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .guide-steps div {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .guide-steps span {
+    background: #ff9500;
+    width: 22px;
+    height: 22px;
+    border-radius: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+  }
+  .guide-close {
+    background: #ff9500;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 40px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 12px;
+    width: 100%;
+  }
+  .dont-show {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #8e8e93;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
   .display-area {
     background: #0a0a0c;
     padding: 20px 24px;
@@ -50,19 +132,17 @@
     font-family: 'Arial Narrow', monospace;
     display: flex;
     justify-content: space-between;
+    align-items: center;
   }
   
   .amount-display {
     text-align: right;
     margin-bottom: 12px;
-    font-family: 'Arial Narrow', monospace;
-    font-weight: 700;
   }
   
   .amount-label {
     font-size: 14px;
     color: #8e8e93;
-    letter-spacing: 1px;
   }
   
   .amount-number {
@@ -72,9 +152,9 @@
     line-height: 1.2;
     word-break: break-all;
     min-height: 70px;
+    font-family: 'Arial Narrow', monospace;
   }
   
-  /* 记录卡片预览 */
   .preview-card {
     background: #2c2c2e;
     margin: 16px 20px;
@@ -95,7 +175,6 @@
     font-family: 'Arial Narrow', monospace;
   }
   
-  /* 表单区域 */
   .form-area {
     flex: 1;
     overflow-y: auto;
@@ -112,7 +191,6 @@
     color: #8e8e93;
     margin-bottom: 8px;
     letter-spacing: 0.5px;
-    font-family: 'Arial Narrow', monospace;
   }
   
   .input-field {
@@ -125,7 +203,6 @@
     font-family: 'Arial Narrow', 'STFangsong', '仿宋', monospace;
     color: white;
     outline: none;
-    transition: 0.2s;
   }
   
   .input-field:focus {
@@ -138,7 +215,6 @@
     background: #2c2c2e url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='white'><path d='M7 10l5 5 5-5z'/></svg>") no-repeat right 16px center;
   }
   
-  /* 分类按钮组 */
   .cat-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -161,15 +237,12 @@
   .cat-btn.active {
     background: #ff9500;
     border-color: #ff9500;
-    color: white;
-    font-weight: 600;
   }
   
   .cat-btn:active {
     transform: scale(0.96);
   }
   
-  /* 数字键盘 */
   .keyboard {
     background: #1c1c1e;
     padding: 12px 16px 20px;
@@ -194,7 +267,6 @@
     font-weight: 600;
     color: white;
     cursor: pointer;
-    transition: 0.05s linear;
     text-align: center;
     box-shadow: 0 1px 0 #3a3a3c;
   }
@@ -224,9 +296,8 @@
     font-size: 20px;
   }
   
-  /* 历史记录区域 */
   .history-section {
-    max-height: 240px;
+    max-height: 200px;
     overflow-y: auto;
     margin-top: 8px;
     border-top: 1px solid #3a3a3c;
@@ -244,7 +315,6 @@
   .history-title {
     font-size: 12px;
     color: #8e8e93;
-    font-family: 'Arial Narrow', monospace;
   }
   
   .history-item {
@@ -255,10 +325,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
-  
-  .history-left {
-    flex: 1;
   }
   
   .history-desc {
@@ -276,13 +342,11 @@
     background: #3a3a3c;
     padding: 2px 8px;
     border-radius: 20px;
-    color: #aeaeb2;
   }
   
   .history-meta {
     font-size: 11px;
     color: #8e8e93;
-    font-family: 'Arial Narrow', monospace;
   }
   
   .history-amount {
@@ -299,19 +363,11 @@
     font-size: 13px;
   }
   
-  /* 滚动条 */
-  ::-webkit-scrollbar {
-    width: 4px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #1c1c1e;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #3a3a3c;
-    border-radius: 4px;
-  }
-  
-  button {
+  .backup-badge {
+    background: #ff9500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
     cursor: pointer;
   }
   
@@ -325,20 +381,15 @@
     padding: 8px 20px;
     border-radius: 40px;
     font-size: 13px;
-    font-family: 'Arial Narrow', monospace;
     pointer-events: none;
     z-index: 1000;
     opacity: 0;
     transition: opacity 0.2s;
   }
   
-  .backup-badge {
-    background: #ff9500;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 10px;
-    cursor: pointer;
-  }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #1c1c1e; }
+  ::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -380,8 +431,7 @@
       <input type="text" id="desc" class="input-field" placeholder="例：午餐 / 加油" autocomplete="off">
     </div>
     
-    <!-- 最近记录 -->
-    <div class="history-section" id="history-section">
+    <div class="history-section">
       <div class="history-header">
         <span class="history-title">📋 最近支出</span>
         <span class="history-title" style="font-size:10px;" onclick="exportExcel()">📎 导出</span>
@@ -390,7 +440,6 @@
     </div>
   </div>
   
-  <!-- 数字键盘 -->
   <div class="keyboard">
     <div class="keyboard-row">
       <button class="key" data-num="1">1</button>
@@ -419,15 +468,45 @@
 <div id="toast" class="toast"></div>
 
 <script>
-// 支出分类（无默认选中）
 const CATEGORIES = ['餐饮', '交通', '购物', '娱乐', '住房', '宝宝', '其他'];
-
 let db;
 let records = [];
 let currentAmount = "0";
 let selectedCat = null;
 
-// 初始化数据库
+// 引导提示（检查是否首次访问）
+function showInstallGuide() {
+  const hasSeen = localStorage.getItem('ledger_install_guide_seen');
+  if(hasSeen) return;
+  
+  const guideDiv = document.createElement('div');
+  guideDiv.className = 'guide-overlay';
+  guideDiv.innerHTML = `
+    <div class="guide-card">
+      <h3>📱 添加到主屏幕</h3>
+      <p>像使用原生App一样记账，数据更安全</p>
+      <div class="guide-steps">
+        <div><span>1</span> 点击底部分享按钮 <span style="font-size:18px;">⎋</span></div>
+        <div><span>2</span> 向下滑动找到 <strong style="color:#ff9500;">“添加到主屏幕”</strong></div>
+        <div><span>3</span> 点击右上角 <strong>“添加”</strong></div>
+      </div>
+      <button class="guide-close" id="guide-close-btn">知道了，开始记账</button>
+      <div class="dont-show">
+        <input type="checkbox" id="dont-show-again"> <label for="dont-show-again">不再显示此提示</label>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(guideDiv);
+  
+  document.getElementById('guide-close-btn').addEventListener('click', () => {
+    if(document.getElementById('dont-show-again').checked) {
+      localStorage.setItem('ledger_install_guide_seen', 'true');
+    }
+    guideDiv.remove();
+  });
+}
+
+// IndexedDB
 const request = indexedDB.open("ledger_calc", 1);
 request.onupgradeneeded = e => {
   db = e.target.result;
@@ -459,13 +538,9 @@ function updateDate() {
   document.getElementById('current-date').innerHTML = `${yyyy}.${mm}.${dd} 支出`;
 }
 
-// 渲染分类按钮（无默认选中）
 function renderCatButtons() {
   const grid = document.getElementById('cat-grid');
-  grid.innerHTML = CATEGORIES.map(cat => `
-    <div class="cat-btn" data-cat="${cat}">${cat}</div>
-  `).join('');
-  
+  grid.innerHTML = CATEGORIES.map(cat => `<div class="cat-btn" data-cat="${cat}">${cat}</div>`).join('');
   document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -476,7 +551,6 @@ function renderCatButtons() {
   });
 }
 
-// 更新预览文字
 function updatePreview() {
   const desc = document.getElementById('desc').value.trim();
   const amountNum = parseFloat(currentAmount);
@@ -486,10 +560,8 @@ function updatePreview() {
   document.getElementById('preview-text').innerHTML = `${catName} · ${desc || '无内容'} · ${account} · ¥${amountShow}`;
 }
 
-// 数字键盘逻辑
 function setupKeyboard() {
   const amountDisplay = document.getElementById('amount-display');
-  
   function updateDisplay() {
     let num = parseFloat(currentAmount);
     if(isNaN(num)) num = 0;
@@ -497,7 +569,6 @@ function setupKeyboard() {
     amountDisplay.innerText = parseFloat(currentAmount).toFixed(2);
     updatePreview();
   }
-  
   document.querySelectorAll('[data-num]').forEach(btn => {
     btn.addEventListener('click', () => {
       const val = btn.getAttribute('data-num');
@@ -507,89 +578,49 @@ function setupKeyboard() {
       updateDisplay();
     });
   });
-  
   document.querySelector('[data-action="del"]').addEventListener('click', () => {
     if(currentAmount.length > 1) currentAmount = currentAmount.slice(0, -1);
     else currentAmount = "0";
     updateDisplay();
   });
-  
   document.querySelector('[data-action="clear"]').addEventListener('click', () => {
     currentAmount = "0";
     updateDisplay();
   });
-  
-  document.querySelector('[data-action="confirm"]').addEventListener('click', () => {
-    saveRecord();
-  });
+  document.querySelector('[data-action="confirm"]').addEventListener('click', () => saveRecord());
 }
 
-// 保存支出记录
 async function saveRecord() {
   const amount = parseFloat(currentAmount);
   const desc = document.getElementById('desc').value.trim();
   const account = document.getElementById('account').value;
-  
-  // 必填验证
-  if(isNaN(amount) || amount <= 0) {
-    showToast("❌ 请输入有效金额");
-    return false;
-  }
-  if(!selectedCat) {
-    showToast("❌ 请选择分类");
-    return false;
-  }
-  if(!desc) {
-    showToast("❌ 请填写内容");
-    return false;
-  }
+  if(isNaN(amount) || amount <= 0) { showToast("❌ 请输入金额"); return; }
+  if(!selectedCat) { showToast("❌ 请选择分类"); return; }
+  if(!desc) { showToast("❌ 请填写内容"); return; }
   
   const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const dateStr = `${yyyy}-${mm}-${dd}`;
-  
-  const record = {
-    id: Date.now(),
-    date: dateStr,
-    amount: amount,
-    desc: desc,
-    cat: selectedCat,
-    acct: account,
-    type: 'out'
-  };
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const record = { id: Date.now(), date: dateStr, amount, desc, cat: selectedCat, acct: account, type: 'out' };
   
   const tx = db.transaction("records", "readwrite");
   tx.objectStore("records").add(record);
   tx.oncomplete = () => {
     records.unshift(record);
     renderHistory();
-    // 清空输入，保留账户和分类状态
     document.getElementById('desc').value = '';
     currentAmount = "0";
     document.getElementById('amount-display').innerText = "0.00";
-    // 不清空选中的分类（保留高亮，但用户可选新的）
     updatePreview();
-    showToast(`✅ 支出 ${amount.toFixed(2)} 已记录`);
-    
-    // 自动备份
+    showToast(`✅ 支出 ${amount.toFixed(2)}`);
     performAutoBackup();
   };
   tx.onerror = () => showToast("保存失败");
-  return true;
 }
 
-// 自动备份（循环3个）
 function performAutoBackup() {
-  if(records.length === 0) return;
+  if(!records.length) return;
   try {
-    const backupData = {
-      version: "calc",
-      time: new Date().toISOString(),
-      totalRecords: records.length,
-      records: records
-    };
+    const backupData = { version: "calc", time: new Date().toISOString(), totalRecords: records.length, records };
     const jsonStr = JSON.stringify(backupData, null, 2);
     const blob = new Blob([jsonStr], {type: "application/json"});
     const url = URL.createObjectURL(blob);
@@ -601,46 +632,22 @@ function performAutoBackup() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
-    // 循环覆盖：保存最近3个备份记录
-    let backups = getBackupList();
+    let backups = JSON.parse(localStorage.getItem('ledger_backup_list') || '[]');
     backups.push({ time: timestamp, date: new Date().toISOString(), count: records.length });
     while(backups.length > 3) backups.shift();
     localStorage.setItem('ledger_backup_list', JSON.stringify(backups));
-    showToast("💾 自动备份完成");
-  } catch(e) {
-    showToast("⚠️ 自动备份失败");
-  }
+  } catch(e) { console.warn(e); }
 }
 
-function getBackupList() {
-  const saved = localStorage.getItem('ledger_backup_list');
-  return saved ? JSON.parse(saved) : [];
-}
+function manualBackup() { performAutoBackup(); showToast("✅ 备份完成"); }
 
-function manualBackup() {
-  if(records.length === 0 && !confirm("暂无数据，备份空文件？")) return;
-  performAutoBackup();
-  showToast("✅ 手动备份完成");
-}
-
-// 渲染历史记录（最近20条）
 function renderHistory() {
   const container = document.getElementById('history-list');
-  if(!records.length) {
-    container.innerHTML = '<div class="empty-history">暂无支出记录<br>输入金额后点确认</div>';
-    return;
-  }
-  const latest = records.slice(0, 30);
-  container.innerHTML = latest.map(r => `
+  if(!records.length) { container.innerHTML = '<div class="empty-history">暂无支出记录</div>'; return; }
+  container.innerHTML = records.slice(0, 30).map(r => `
     <div class="history-item">
-      <div class="history-left">
-        <div class="history-desc">
-          ${escapeHtml(r.desc)}
-          <span class="history-cat">${r.cat}</span>
-        </div>
-        <div class="history-meta">${r.date} · ${r.acct}</div>
-      </div>
+      <div><div class="history-desc">${escapeHtml(r.desc)}<span class="history-cat">${r.cat}</span></div>
+      <div class="history-meta">${r.date} · ${r.acct}</div></div>
       <div class="history-amount">-${r.amount.toFixed(2)}</div>
     </div>
   `).join('');
@@ -648,19 +655,16 @@ function renderHistory() {
 
 function exportExcel() {
   if(!records.length) { showToast("暂无数据"); return; }
-  // 动态加载 xlsx 库（简单处理）
   const script = document.createElement('script');
   script.src = "https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js";
   script.onload = () => {
-    const ws = XLSX.utils.json_to_sheet(records.map(r => ({
-      '日期': r.date, '金额': r.amount, '内容': r.desc, '分类': r.cat, '账户': r.acct
-    })));
+    const ws = XLSX.utils.json_to_sheet(records.map(r => ({ '日期': r.date, '金额': r.amount, '内容': r.desc, '分类': r.cat, '账户': r.acct })));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "支出记录");
     XLSX.writeFile(wb, `支出记录_${new Date().toISOString().slice(0,10)}.xlsx`);
     showToast("导出成功");
   };
-  script.onerror = () => showToast("导出库加载失败");
+  script.onerror = () => showToast("导出失败");
   document.head.appendChild(script);
 }
 
@@ -671,20 +675,16 @@ function showToast(msg) {
   setTimeout(() => toast.style.opacity = '0', 2000);
 }
 
-function escapeHtml(str) {
-  if(!str) return '';
-  return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
-}
+function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-// 监听输入变化
 document.getElementById('desc').addEventListener('input', () => updatePreview());
 document.getElementById('account').addEventListener('change', () => updatePreview());
 
-// 初始化
 renderCatButtons();
 setupKeyboard();
 updateDate();
 updatePreview();
+showInstallGuide();
 </script>
 </body>
 </html>
