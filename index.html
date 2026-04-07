@@ -513,8 +513,7 @@
       <div>
         <button class="date-picker" id="dateTriggerBtn">📅 今天</button>
         <!-- 导入按钮 -->
-        <button class="import-btn" id="importBtn" title="导入备份">📂 导入</button>
-        <input type="file" id="importFileInput" class="import-file-input" accept=".json">
+        <button class="import-btn" id="importBtn" title="载入上次记录">📂 导入</button>
       </div>
     </div>
 
@@ -931,67 +930,44 @@
     deleteRecord(id);
   };
 
-  // 自动备份（时间正序，仅在记账/编辑/删除后触发）
+  // 自动保存到 localStorage（不触发下载）
   function performAutoBackup() {
     if (!records.length) return;
     try {
       const sortedForBackup = [...records].sort((a,b) => a.date.localeCompare(b.date));
       const backupData = { time: new Date().toISOString(), records: sortedForBackup };
-      const jsonStr = JSON.stringify(backupData, null, 2);
-      const blob = new Blob([jsonStr], {type: "application/json"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      a.download = `ledger_${timestamp}.json`;
-      a.href = url;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      // 静默完成，不弹提示
+      localStorage.setItem('ledger_last_backup', JSON.stringify(backupData));
     } catch(e) { console.warn(e); }
   }
 
-  // 导入备份（手动）
-  function importBackup(file) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const backupData = JSON.parse(e.target.result);
-        let importedRecords = [];
-        if (backupData.records && Array.isArray(backupData.records)) {
-          importedRecords = backupData.records;
-        } else if (Array.isArray(backupData)) {
-          importedRecords = backupData;
-        } else {
-          throw new Error("格式错误");
-        }
-        
-        if (importedRecords.length === 0) {
-          showToast("备份文件无数据");
-          return;
-        }
-        
-        if (!confirm(`找到 ${importedRecords.length} 条记录，确定要恢复吗？当前数据将被覆盖！`)) return;
-        
-        const tx = db.transaction("records", "readwrite");
-        const store = tx.objectStore("records");
-        store.clear();
-        importedRecords.forEach(r => store.add(r));
-        
-        tx.oncomplete = () => {
-          showToast(`已导入 ${importedRecords.length} 条记录`);
-          refreshAll();
-          performAutoBackup(); // 导入后也备份一下
-        };
-        tx.onerror = () => showToast("导入失败");
-      } catch(err) {
-        showToast("文件解析失败");
+
+  // 导入：从 localStorage 静默载入最后一次保存的记录
+  function importBackup() {
+    try {
+      const raw = localStorage.getItem('ledger_last_backup');
+      if (!raw) { showToast("暂无保存记录"); return; }
+      const backupData = JSON.parse(raw);
+      let importedRecords = [];
+      if (backupData.records && Array.isArray(backupData.records)) {
+        importedRecords = backupData.records;
+      } else if (Array.isArray(backupData)) {
+        importedRecords = backupData;
+      } else {
+        showToast("数据格式错误"); return;
       }
-    };
-    reader.readAsText(file);
+      if (importedRecords.length === 0) { showToast("无可用记录"); return; }
+      const tx = db.transaction("records", "readwrite");
+      const store = tx.objectStore("records");
+      store.clear();
+      importedRecords.forEach(r => store.add(r));
+      tx.oncomplete = () => {
+        showToast(`已载入 ${importedRecords.length} 条记录`);
+        refreshAll();
+      };
+      tx.onerror = () => showToast("载入失败");
+    } catch(err) {
+      showToast("载入失败");
+    }
   }
 
   // 汇总功能
@@ -1096,7 +1072,9 @@
       hiddenPicker.showPicker();
     });
     hiddenPicker.addEventListener('change', (e) => {
-      currentDate = new Date(e.target.value);
+      // 用本地时区解析日期，避免时区偏移导致日期错误
+      const parts = e.target.value.split('-');
+      currentDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
       updateDateBtn();
     });
     updateDateBtn();
@@ -1125,17 +1103,8 @@
   // 导入按钮逻辑
   function setupImport() {
     const importBtn = document.getElementById('importBtn');
-    const fileInput = document.getElementById('importFileInput');
-    
     importBtn.addEventListener('click', () => {
-      fileInput.click();
-    });
-    
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        importBackup(e.target.files[0]);
-        fileInput.value = '';
-      }
+      importBackup();
     });
   }
 
