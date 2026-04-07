@@ -104,7 +104,23 @@
   .cat-icon { font-size: 24px; }
   .cat-name { font-size: 11px; font-weight: 500; margin-top: 4px; color: #3a3a3c; }
 
-  /* 账户网格 - 同样4列 */
+  /* 用途输入框 */
+  .purpose-input {
+    width: 100%;
+    background: #f9f9fb;
+    border: 1px solid #e9e9ef;
+    border-radius: 16px;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 16px;
+  }
+  .purpose-input:focus {
+    border-color: #ff9f0a;
+  }
+
+  /* 账户网格 - 4列 */
   .account-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -128,22 +144,6 @@
   }
   .account-icon { font-size: 22px; }
   .account-name { font-size: 10px; font-weight: 500; margin-top: 4px; color: #3a3a3c; }
-
-  /* 用途输入框 */
-  .purpose-input {
-    width: 100%;
-    background: #f9f9fb;
-    border: 1px solid #e9e9ef;
-    border-radius: 16px;
-    padding: 12px 16px;
-    font-size: 15px;
-    font-family: inherit;
-    outline: none;
-    margin-bottom: 16px;
-  }
-  .purpose-input:focus {
-    border-color: #ff9f0a;
-  }
 
   /* 金额显示区 - 右对齐 */
   .amount-area {
@@ -311,11 +311,11 @@
       <div class="cat-grid" id="catGrid"></div>
     </div>
 
-    <!-- 账户区域 - icon 网格 -->
-    <div class="account-grid" id="accountGrid"></div>
-
-    <!-- 用途输入 -->
+    <!-- 用途输入框（放在账户前面） -->
     <input type="text" id="purposeInput" class="purpose-input" placeholder="用途" autocomplete="off">
+
+    <!-- 账户网格（放在用途后面） -->
+    <div class="account-grid" id="accountGrid"></div>
 
     <!-- 金额显示 - 右对齐 -->
     <div class="amount-area">
