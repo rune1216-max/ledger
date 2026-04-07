@@ -2,191 +2,433 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>记账本 | 自动循环备份</title>
+<title>记账本 | 计算器式记账</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap');
-  
-  :root {
-    --ink: #1a1a1a; --paper: #f5f0e8; --cream: #ede8da;
-    --accent: #c0392b; --accent2: #2980b9; --green: #27ae60;
-    --muted: #8a8070; --border: #c8bfaa;
-    --safe-top: env(safe-area-inset-top, 20px);
-    --safe-bottom: env(safe-area-inset-bottom, 20px);
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
   }
-
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  
   body {
-    margin: 0; background: var(--paper); color: var(--ink);
-    font-family: 'Noto Serif SC', serif; line-height: 1.6;
-    padding-top: var(--safe-top); padding-bottom: calc(var(--safe-bottom) + 80px);
+    margin: 0;
+    background: #2c2c2e;
+    font-family: 'Arial Narrow', 'Arial', 'STFangsong', '仿宋', 'YouYuan', '幼圆', monospace;
+    font-weight: 400;
+    color: #ffffff;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
-
-  header { padding: 30px 20px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; background: var(--paper); position: sticky; top: 0; z-index: 100; }
-  h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -1px; }
-  .badge { background: var(--ink); color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-family: 'Space Mono'; }
-
-  .container { padding: 20px; max-width: 550px; margin: 0 auto; }
-  .card { background: var(--cream); border: 1px solid var(--border); padding: 20px; margin-bottom: 24px; box-shadow: 6px 6px 0 var(--border); border-radius: 4px; }
   
-  label { display: block; font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; font-weight: 700; letter-spacing: 1px; }
-  input, select {
-    width: 100%; background: white; border: 1px solid var(--border); border-radius: 8px;
-    padding: 12px 12px; font-family: inherit; font-size: 16px; color: var(--ink); margin-bottom: 18px; outline: none; transition: 0.2s;
+  /* 主容器 */
+  .app {
+    max-width: 500px;
+    margin: 0 auto;
+    width: 100%;
+    height: 100%;
+    background: #1c1c1e;
+    display: flex;
+    flex-direction: column;
+    position: relative;
   }
-  input:focus, select:focus { border-color: var(--ink); }
-
-  .required::after { content: " *"; color: var(--accent); }
   
-  .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
-  button.primary { background: var(--accent); color: white; border: none; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer; border-radius: 40px; transition: 0.2s; }
-  button.secondary { background: var(--green); color: white; border: none; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer; border-radius: 40px; transition: 0.2s; }
-  button:active { transform: scale(0.97); opacity: 0.9; }
-
-  .record-item { padding: 16px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center; }
-  .record-date { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-  .record-desc { font-weight: 600; font-size: 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-  .record-cat { font-size: 10px; background: var(--border); padding: 2px 8px; border-radius: 20px; font-weight: 400; }
-  .amount-out { color: var(--accent); font-weight: 700; font-family: 'Space Mono'; font-size: 16px; }
-  .amount-in { color: var(--green); font-weight: 700; font-family: 'Space Mono'; font-size: 16px; }
-
-  .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(26,26,26,0.9); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
-  .modal-content { background: var(--paper); padding: 25px; width: 90%; max-width: 400px; border: 1px solid var(--ink); box-shadow: 10px 10px 0 var(--ink); border-radius: 4px; max-height: 85vh; overflow-y: auto; }
+  /* 头部显示区 */
+  .display-area {
+    background: #0a0a0c;
+    padding: 20px 24px;
+    padding-top: env(safe-area-inset-top, 20px);
+    border-bottom: 1px solid #3a3a3c;
+  }
   
-  #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; padding: 10px 20px; font-size: 13px; border-radius: 30px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 3000; font-family: monospace; white-space: nowrap; }
+  .date-row {
+    font-size: 14px;
+    color: #8e8e93;
+    margin-bottom: 20px;
+    font-family: 'Arial Narrow', monospace;
+    display: flex;
+    justify-content: space-between;
+  }
   
-  .stat-box { display: flex; justify-content: space-around; margin-bottom: 20px; padding: 12px; background: var(--cream); border: 1px solid var(--border); border-radius: 12px; flex-wrap: wrap; gap: 10px; }
-  .stat-item { text-align: center; flex: 1; min-width: 65px; }
-  .stat-number { font-size: 20px; font-weight: 700; font-family: 'Space Mono'; }
-  .stat-label { font-size: 10px; color: var(--muted); }
+  .amount-display {
+    text-align: right;
+    margin-bottom: 12px;
+    font-family: 'Arial Narrow', monospace;
+    font-weight: 700;
+  }
   
-  .backup-status { font-size: 11px; background: var(--border); padding: 4px 8px; border-radius: 20px; display: inline-block; }
+  .amount-label {
+    font-size: 14px;
+    color: #8e8e93;
+    letter-spacing: 1px;
+  }
   
-  .alert-banner { background: #ffebee; border: 1px solid var(--accent); padding: 12px; margin-bottom: 20px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; color: #c0392b; }
-  .alert-banner a { color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: bold; }
+  .amount-number {
+    font-size: 48px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.2;
+    word-break: break-all;
+    min-height: 70px;
+  }
+  
+  /* 记录卡片预览 */
+  .preview-card {
+    background: #2c2c2e;
+    margin: 16px 20px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 15px;
+  }
+  .preview-label {
+    color: #8e8e93;
+  }
+  .preview-value {
+    font-weight: 600;
+    font-family: 'Arial Narrow', monospace;
+  }
+  
+  /* 表单区域 */
+  .form-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 20px;
+    margin-bottom: 8px;
+  }
+  
+  .input-group {
+    margin-bottom: 20px;
+  }
+  
+  .input-label {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    font-family: 'Arial Narrow', monospace;
+  }
+  
+  .input-field {
+    width: 100%;
+    background: #2c2c2e;
+    border: 1px solid #3a3a3c;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 16px;
+    font-family: 'Arial Narrow', 'STFangsong', '仿宋', monospace;
+    color: white;
+    outline: none;
+    transition: 0.2s;
+  }
+  
+  .input-field:focus {
+    border-color: #ff9500;
+  }
+  
+  select.input-field {
+    cursor: pointer;
+    appearance: none;
+    background: #2c2c2e url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='white'><path d='M7 10l5 5 5-5z'/></svg>") no-repeat right 16px center;
+  }
+  
+  /* 分类按钮组 */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  
+  .cat-btn {
+    background: #2c2c2e;
+    border: 1px solid #3a3a3c;
+    border-radius: 30px;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 15px;
+    font-family: 'Arial Narrow', 'STFangsong', '仿宋', monospace;
+    color: #ffffff;
+    cursor: pointer;
+    transition: 0.1s;
+  }
+  
+  .cat-btn.active {
+    background: #ff9500;
+    border-color: #ff9500;
+    color: white;
+    font-weight: 600;
+  }
+  
+  .cat-btn:active {
+    transform: scale(0.96);
+  }
+  
+  /* 数字键盘 */
+  .keyboard {
+    background: #1c1c1e;
+    padding: 12px 16px 20px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 10px);
+    border-top: 1px solid #3a3a3c;
+  }
+  
+  .keyboard-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .key {
+    flex: 1;
+    background: #2c2c2e;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 0;
+    font-size: 28px;
+    font-family: 'Arial Narrow', monospace;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: 0.05s linear;
+    text-align: center;
+    box-shadow: 0 1px 0 #3a3a3c;
+  }
+  
+  .key:active {
+    background: #3a3a3c;
+    transform: scale(0.96);
+  }
+  
+  .key-zero {
+    flex: 2.2;
+  }
+  
+  .key-confirm {
+    background: #ff9500;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  
+  .key-confirm:active {
+    background: #e08600;
+  }
+  
+  .key-del {
+    background: #3a3a3c;
+    font-size: 20px;
+  }
+  
+  /* 历史记录区域 */
+  .history-section {
+    max-height: 240px;
+    overflow-y: auto;
+    margin-top: 8px;
+    border-top: 1px solid #3a3a3c;
+    padding-top: 12px;
+  }
+  
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+  
+  .history-title {
+    font-size: 12px;
+    color: #8e8e93;
+    font-family: 'Arial Narrow', monospace;
+  }
+  
+  .history-item {
+    background: #2c2c2e;
+    margin-bottom: 8px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .history-left {
+    flex: 1;
+  }
+  
+  .history-desc {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .history-cat {
+    font-size: 11px;
+    background: #3a3a3c;
+    padding: 2px 8px;
+    border-radius: 20px;
+    color: #aeaeb2;
+  }
+  
+  .history-meta {
+    font-size: 11px;
+    color: #8e8e93;
+    font-family: 'Arial Narrow', monospace;
+  }
+  
+  .history-amount {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Arial Narrow', monospace;
+    color: #ff9500;
+  }
+  
+  .empty-history {
+    text-align: center;
+    padding: 24px;
+    color: #8e8e93;
+    font-size: 13px;
+  }
+  
+  /* 滚动条 */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1c1c1e;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #3a3a3c;
+    border-radius: 4px;
+  }
+  
+  button {
+    cursor: pointer;
+  }
+  
+  .toast {
+    position: fixed;
+    bottom: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 40px;
+    font-size: 13px;
+    font-family: 'Arial Narrow', monospace;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  .backup-badge {
+    background: #ff9500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
-
-<header>
-  <div>
-    <div style="font-family:'Space Mono'; font-size:11px; color:var(--muted);">💾 <span id="backup-count">0</span>/3 个备份 | 循环覆盖</div>
-    <h1>📒 流水账</h1>
+<div class="app">
+  <div class="display-area">
+    <div class="date-row">
+      <span id="current-date"></span>
+      <span class="backup-badge" onclick="manualBackup()">💾 备份</span>
+    </div>
+    <div class="amount-display">
+      <div class="amount-label">金额</div>
+      <div class="amount-number" id="amount-display">0</div>
+    </div>
   </div>
-  <div>
-    <button class="backup-status" onclick="openBackupPanel()">📀 备份管理</button>
+  
+  <div class="preview-card">
+    <span class="preview-label">当前记录</span>
+    <span class="preview-value" id="preview-text">等待输入</span>
   </div>
-</header>
-
-<div class="container">
-  <div id="alert-banner" class="alert-banner" style="display: none;">
-    <span>⚠️ 备份失败！请确保浏览器允许下载文件</span>
-    <a onclick="manualBackup()">🔄 立即重试备份</a>
-  </div>
-
-  <div class="card">
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-      <div>
-        <label class="required">📅 日期</label>
-        <input type="date" id="date" readonly style="background:#f0ede5;">
-      </div>
-      <div>
-        <label class="required">💰 金额</label>
-        <input type="number" id="amount" step="0.01" placeholder="0.00">
-      </div>
+  
+  <div class="form-area">
+    <div class="input-group">
+      <div class="input-label">分类（必选）</div>
+      <div class="cat-grid" id="cat-grid"></div>
     </div>
     
-    <div style="margin-bottom: 8px;">
-      <label class="required">📊 类型</label>
-      <div style="display: flex; gap: 12px; margin-bottom: 18px;">
-        <label style="display: flex; align-items: center; gap: 6px; text-transform: none; font-size: 14px;">
-          <input type="radio" name="type" value="in" onchange="updateCategory()"> 💚 收入
-        </label>
-        <label style="display: flex; align-items: center; gap: 6px; text-transform: none; font-size: 14px;">
-          <input type="radio" name="type" value="out" checked onchange="updateCategory()"> ❤️ 支出
-        </label>
-      </div>
-    </div>
-    
-    <div>
-      <label class="required">🏷️ 分类</label>
-      <select id="cat"></select>
-    </div>
-    
-    <div>
-      <label class="required">💳 账户</label>
-      <select id="acct">
-        <option value="现金">💵 现金</option>
-        <option value="信用卡">💳 信用卡</option>
-        <option value="借记卡">🏦 借记卡</option>
-        <option value="微信/支付宝">📱 微信/支付宝</option>
+    <div class="input-group">
+      <div class="input-label">账户</div>
+      <select id="account" class="input-field">
+        <option value="现金">现金</option>
+        <option value="信用卡">信用卡</option>
+        <option value="借记卡">借记卡</option>
+        <option value="微信/支付宝">微信/支付宝</option>
       </select>
     </div>
     
-    <div>
-      <label class="required">📝 内容</label>
-      <input type="text" id="desc" placeholder="例：买菜 / 加油 / 工资">
+    <div class="input-group">
+      <div class="input-label">内容（必填）</div>
+      <input type="text" id="desc" class="input-field" placeholder="例：午餐 / 加油" autocomplete="off">
     </div>
     
-    <div class="btn-group">
-      <button class="secondary" onclick="submitRecord('in')">➕ 记收入</button>
-      <button class="primary" onclick="submitRecord('out')">➖ 记支出</button>
+    <!-- 最近记录 -->
+    <div class="history-section" id="history-section">
+      <div class="history-header">
+        <span class="history-title">📋 最近支出</span>
+        <span class="history-title" style="font-size:10px;" onclick="exportExcel()">📎 导出</span>
+      </div>
+      <div id="history-list"></div>
     </div>
   </div>
-
-  <!-- 统计卡片 -->
-  <div class="stat-box">
-    <div class="stat-item"><div class="stat-label">本月收入</div><div class="stat-number" id="stat-income" style="color: var(--green);">0</div></div>
-    <div class="stat-item"><div class="stat-label">本月支出</div><div class="stat-number" id="stat-expense" style="color: var(--accent);">0</div></div>
-    <div class="stat-item"><div class="stat-label">结余</div><div class="stat-number" id="stat-balance">0</div></div>
-    <div class="stat-item"><div class="stat-label">总记录</div><div class="stat-number" id="stat-total">0</div></div>
-  </div>
-
-  <div style="margin-top: 20px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
-      <select id="month-select" style="width:auto; margin:0; font-weight:700; font-size: 16px; padding: 8px 12px;" onchange="render()"></select>
+  
+  <!-- 数字键盘 -->
+  <div class="keyboard">
+    <div class="keyboard-row">
+      <button class="key" data-num="1">1</button>
+      <button class="key" data-num="2">2</button>
+      <button class="key" data-num="3">3</button>
+      <button class="key key-del" data-action="del">⌫</button>
     </div>
-    <div id="list"></div>
-  </div>
-</div>
-
-<!-- 备份管理弹窗 -->
-<div id="backup-modal" class="modal">
-  <div class="modal-content">
-    <h2 style="margin:0 0 15px; font-size: 20px;">💿 循环备份系统</h2>
-    <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">像行车记录仪一样，自动保存最近3个备份，超出自动覆盖最旧的。</p>
-    
-    <div style="background: var(--cream); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-      <div style="font-weight: bold; margin-bottom: 10px;">📁 备份文件列表（最多3个）</div>
-      <div id="backup-list" style="font-size: 13px;"></div>
+    <div class="keyboard-row">
+      <button class="key" data-num="4">4</button>
+      <button class="key" data-num="5">5</button>
+      <button class="key" data-num="6">6</button>
+      <button class="key key-confirm" data-action="confirm">↵ 确认</button>
     </div>
-    
-    <button class="primary" style="width:100%; margin-bottom: 12px; background: var(--ink);" onclick="manualBackup(); closeBackupPanel();">💾 立即手动备份</button>
-    
-    <label class="file-input-label" style="display: block; background: var(--accent2); text-align: center; padding: 12px; border-radius: 40px; color: white; cursor: pointer; margin-bottom: 12px;">
-      📂 从备份文件恢复
-      <input type="file" id="restore-file" accept=".json" style="display: none;" onchange="restoreFromFile(this.files)">
-    </label>
-    
-    <button class="secondary" style="width:100%; border-color: var(--accent); color: var(--accent); background: none;" onclick="resetAllData()">🗑️ 清空所有数据</button>
-    
-    <button class="sync-btn" style="width:100%; margin-top: 20px; border: 1px solid var(--border); background: none; padding: 10px; border-radius: 40px;" onclick="closeBackupPanel()">关闭</button>
+    <div class="keyboard-row">
+      <button class="key" data-num="7">7</button>
+      <button class="key" data-num="8">8</button>
+      <button class="key" data-num="9">9</button>
+      <button class="key" data-action="clear" style="background:#3a3a3c;">C</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key key-zero" data-num="0">0</button>
+      <button class="key" data-num=".">.</button>
+    </div>
   </div>
 </div>
-
-<div id="toast">✨ 提示</div>
+<div id="toast" class="toast"></div>
 
 <script>
-// 分类定义
-const IN_CATS = ['工资', '房租', '其他'];
-const OUT_CATS = ['餐饮', '交通', '购物', '娱乐', '住房', '宝宝', '其他'];
+// 支出分类（无默认选中）
+const CATEGORIES = ['餐饮', '交通', '购物', '娱乐', '住房', '宝宝', '其他'];
 
 let db;
 let records = [];
+let currentAmount = "0";
+let selectedCat = null;
 
-// IndexedDB 初始化
-const request = indexedDB.open("ledger_db_v2", 1);
+// 初始化数据库
+const request = indexedDB.open("ledger_calc", 1);
 request.onupgradeneeded = e => {
   db = e.target.result;
   if (!db.objectStoreNames.contains("records")) {
@@ -197,345 +439,252 @@ request.onsuccess = e => {
   db = e.target.result;
   loadRecords();
 };
-request.onerror = () => showToast("❌ 数据库加载失败");
+request.onerror = () => showToast("数据库错误");
 
 function loadRecords() {
   const tx = db.transaction("records", "readonly");
   const req = tx.objectStore("records").getAll();
   req.onsuccess = () => {
     records = req.result.sort((a,b) => b.date.localeCompare(a.date));
-    initUI();
-    render();
-    updateStats();
-    updateBackupListDisplay();
+    renderHistory();
+    updateDate();
   };
 }
 
-// 初始化UI
-function initUI() {
-  // 自动填入今天日期
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('date').value = today;
-  
-  // 设置默认分类（支出）
-  updateCategory();
+function updateDate() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById('current-date').innerHTML = `${yyyy}.${mm}.${dd} 支出`;
 }
 
-function updateCategory() {
-  const type = document.querySelector('input[name="type"]:checked').value;
-  const catSelect = document.getElementById('cat');
-  if(type === 'in') {
-    catSelect.innerHTML = IN_CATS.map(c => `<option value="${c}">${c}</option>`).join('');
-  } else {
-    catSelect.innerHTML = OUT_CATS.map(c => `<option value="${c}">${c}</option>`).join('');
-  }
+// 渲染分类按钮（无默认选中）
+function renderCatButtons() {
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = CATEGORIES.map(cat => `
+    <div class="cat-btn" data-cat="${cat}">${cat}</div>
+  `).join('');
+  
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedCat = btn.getAttribute('data-cat');
+      updatePreview();
+    });
+  });
 }
 
-// 提交记录
-async function submitRecord(type) {
-  // 强制使用选中的类型
-  const selectedType = document.querySelector('input[name="type"]:checked').value;
-  if(selectedType !== type) {
-    document.querySelector(`input[name="type"][value="${type}"]`).checked = true;
-    updateCategory();
-  }
-  
-  const amount = parseFloat(document.getElementById('amount').value);
-  const cat = document.getElementById('cat').value;
-  const acct = document.getElementById('acct').value;
+// 更新预览文字
+function updatePreview() {
   const desc = document.getElementById('desc').value.trim();
-  const date = document.getElementById('date').value;
+  const amountNum = parseFloat(currentAmount);
+  const account = document.getElementById('account').value;
+  const catName = selectedCat || '未选';
+  const amountShow = isNaN(amountNum) ? '0' : amountNum.toFixed(2);
+  document.getElementById('preview-text').innerHTML = `${catName} · ${desc || '无内容'} · ${account} · ¥${amountShow}`;
+}
+
+// 数字键盘逻辑
+function setupKeyboard() {
+  const amountDisplay = document.getElementById('amount-display');
+  
+  function updateDisplay() {
+    let num = parseFloat(currentAmount);
+    if(isNaN(num)) num = 0;
+    if(currentAmount === "") currentAmount = "0";
+    amountDisplay.innerText = parseFloat(currentAmount).toFixed(2);
+    updatePreview();
+  }
+  
+  document.querySelectorAll('[data-num]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.getAttribute('data-num');
+      if(val === '.' && currentAmount.includes('.')) return;
+      if(currentAmount === "0" && val !== '.') currentAmount = val;
+      else currentAmount += val;
+      updateDisplay();
+    });
+  });
+  
+  document.querySelector('[data-action="del"]').addEventListener('click', () => {
+    if(currentAmount.length > 1) currentAmount = currentAmount.slice(0, -1);
+    else currentAmount = "0";
+    updateDisplay();
+  });
+  
+  document.querySelector('[data-action="clear"]').addEventListener('click', () => {
+    currentAmount = "0";
+    updateDisplay();
+  });
+  
+  document.querySelector('[data-action="confirm"]').addEventListener('click', () => {
+    saveRecord();
+  });
+}
+
+// 保存支出记录
+async function saveRecord() {
+  const amount = parseFloat(currentAmount);
+  const desc = document.getElementById('desc').value.trim();
+  const account = document.getElementById('account').value;
   
   // 必填验证
-  if(!amount || isNaN(amount) || amount <= 0) {
-    alert("❌ 请填写正确的金额");
+  if(isNaN(amount) || amount <= 0) {
+    showToast("❌ 请输入有效金额");
     return false;
   }
-  if(!cat) {
-    alert("❌ 请选择分类");
-    return false;
-  }
-  if(!acct) {
-    alert("❌ 请选择账户");
+  if(!selectedCat) {
+    showToast("❌ 请选择分类");
     return false;
   }
   if(!desc) {
-    alert("❌ 请填写内容说明");
-    return false;
-  }
-  if(!date) {
-    alert("❌ 请填写日期");
+    showToast("❌ 请填写内容");
     return false;
   }
   
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const dateStr = `${yyyy}-${mm}-${dd}`;
+  
   const record = {
     id: Date.now(),
-    date: date,
-    amount: Math.abs(amount),
+    date: dateStr,
+    amount: amount,
     desc: desc,
-    cat: cat,
-    acct: acct,
-    type: type
+    cat: selectedCat,
+    acct: account,
+    type: 'out'
   };
   
   const tx = db.transaction("records", "readwrite");
   tx.objectStore("records").add(record);
   tx.oncomplete = () => {
     records.unshift(record);
-    render();
-    updateStats();
-    // 清空金额和内容，保留日期和类型
-    document.getElementById('amount').value = '';
+    renderHistory();
+    // 清空输入，保留账户和分类状态
     document.getElementById('desc').value = '';
-    showToast(`✅ ${type === 'out' ? '支出' : '收入'} ${amount.toFixed(2)} 已记录`);
+    currentAmount = "0";
+    document.getElementById('amount-display').innerText = "0.00";
+    // 不清空选中的分类（保留高亮，但用户可选新的）
+    updatePreview();
+    showToast(`✅ 支出 ${amount.toFixed(2)} 已记录`);
     
-    // 🔥 关键：每次记账后自动备份（像行车记录仪）
+    // 自动备份
     performAutoBackup();
   };
-  tx.onerror = () => alert("保存失败");
+  tx.onerror = () => showToast("保存失败");
   return true;
 }
 
-// ========== 循环备份系统（保留最近3个备份） ==========
+// 自动备份（循环3个）
 function performAutoBackup() {
   if(records.length === 0) return;
-  
   try {
     const backupData = {
-      version: "3.0",
+      version: "calc",
       time: new Date().toISOString(),
       totalRecords: records.length,
       records: records
     };
-    
     const jsonStr = JSON.stringify(backupData, null, 2);
     const blob = new Blob([jsonStr], {type: "application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    
-    // 生成备份文件名（带时间戳）
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    a.download = `ledger_backup_${timestamp}.json`;
+    a.download = `ledger_${timestamp}.json`;
     a.href = url;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    // 记录备份历史到 localStorage（实现循环覆盖）
-    saveBackupRecord(timestamp);
-    showToast("💾 自动备份成功");
-    document.getElementById('alert-banner').style.display = 'none';
+    // 循环覆盖：保存最近3个备份记录
+    let backups = getBackupList();
+    backups.push({ time: timestamp, date: new Date().toISOString(), count: records.length });
+    while(backups.length > 3) backups.shift();
+    localStorage.setItem('ledger_backup_list', JSON.stringify(backups));
+    showToast("💾 自动备份完成");
   } catch(e) {
-    console.error("备份失败", e);
-    showToast("❌ 自动备份失败！");
-    document.getElementById('alert-banner').style.display = 'flex';
+    showToast("⚠️ 自动备份失败");
   }
 }
 
-// 保存备份记录（最多3个，像行车记录仪循环覆盖）
-function saveBackupRecord(timestamp) {
-  let backups = getBackupHistory();
-  
-  backups.push({
-    time: timestamp,
-    date: new Date().toISOString(),
-    count: records.length
-  });
-  
-  // 只保留最近3个（从旧到新排序后取最后3个）
-  while(backups.length > 3) {
-    backups.shift(); // 移除最旧的
-  }
-  
-  localStorage.setItem('ledger_backups', JSON.stringify(backups));
-  updateBackupListDisplay();
-}
-
-function getBackupHistory() {
-  const saved = localStorage.getItem('ledger_backups');
+function getBackupList() {
+  const saved = localStorage.getItem('ledger_backup_list');
   return saved ? JSON.parse(saved) : [];
 }
 
-function updateBackupListDisplay() {
-  const backups = getBackupHistory();
-  const container = document.getElementById('backup-list');
-  const countSpan = document.getElementById('backup-count');
-  
-  if(container) {
-    if(backups.length === 0) {
-      container.innerHTML = '<div style="color: var(--muted); padding: 8px 0;">暂无备份，记账后会自动保存</div>';
-    } else {
-      container.innerHTML = backups.slice().reverse().map((b, idx) => `
-        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
-          <span>📀 备份 ${backups.length - idx}</span>
-          <span style="font-size: 11px;">${new Date(b.date).toLocaleString('zh-CN')}</span>
-          <span style="font-size: 11px;">${b.count}条</span>
-        </div>
-      `).join('');
-    }
-  }
-  
-  if(countSpan) countSpan.innerText = backups.length;
-}
-
-// 手动备份
 function manualBackup() {
-  if(records.length === 0) {
-    if(!confirm("暂无数据，确定要备份空文件吗？")) return;
-  }
-  
-  try {
-    const backupData = {
-      version: "3.0",
-      time: new Date().toISOString(),
-      totalRecords: records.length,
-      records: records,
-      note: "手动备份"
-    };
-    
-    const jsonStr = JSON.stringify(backupData, null, 2);
-    const blob = new Blob([jsonStr], {type: "application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    a.download = `ledger_backup_manual_${timestamp}.json`;
-    a.href = url;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    saveBackupRecord(timestamp);
-    showToast(`✅ 手动备份成功 (${records.length}条)`);
-    document.getElementById('alert-banner').style.display = 'none';
-  } catch(e) {
-    showToast("❌ 备份失败");
-    document.getElementById('alert-banner').style.display = 'flex';
-  }
+  if(records.length === 0 && !confirm("暂无数据，备份空文件？")) return;
+  performAutoBackup();
+  showToast("✅ 手动备份完成");
 }
 
-// 从文件恢复
-function restoreFromFile(files) {
-  if(!files || files.length === 0) return;
-  const file = files[0];
-  const reader = new FileReader();
-  
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      let restoreRecords = [];
-      
-      if(data.records && Array.isArray(data.records)) {
-        restoreRecords = data.records;
-      } else if(Array.isArray(data)) {
-        restoreRecords = data;
-      } else {
-        throw new Error("格式错误");
-      }
-      
-      if(restoreRecords.length === 0) {
-        alert("备份文件无数据");
-        return;
-      }
-      
-      if(!confirm(`找到 ${restoreRecords.length} 条记录，确定恢复吗？当前数据将被覆盖！`)) return;
-      
-      const tx = db.transaction("records", "readwrite");
-      const store = tx.objectStore("records");
-      store.clear();
-      restoreRecords.forEach(r => store.add(r));
-      
-      tx.oncomplete = () => {
-        showToast("✅ 恢复成功，刷新中...");
-        setTimeout(() => location.reload(), 800);
-      };
-      tx.onerror = () => alert("恢复失败");
-    } catch(err) {
-      alert("文件解析失败，请选择正确的 .json 备份文件");
-    }
-  };
-  reader.readAsText(file);
-}
-
-// 清空所有数据
-function resetAllData() {
-  if(!confirm("⚠️ 此操作将删除所有记账数据！\n\n确定要继续吗？")) return;
-  if(!confirm("最后确认：真的要清空所有数据吗？无法撤销！")) return;
-  
-  const tx = db.transaction("records", "readwrite");
-  tx.objectStore("records").clear();
-  tx.oncomplete = () => {
-    records = [];
-    render();
-    updateStats();
-    showToast("🗑️ 已清空所有数据");
-    closeBackupPanel();
-  };
-}
-
-// UI 辅助函数
-function updateStats() {
-  const monthSelect = document.getElementById('month-select');
-  if(!monthSelect.value) return;
-  const month = monthSelect.value;
-  const filtered = records.filter(r => r.date.startsWith(month));
-  const income = filtered.filter(r => r.type === 'in').reduce((s, r) => s + r.amount, 0);
-  const expense = filtered.filter(r => r.type === 'out').reduce((s, r) => s + r.amount, 0);
-  document.getElementById('stat-income').innerText = income.toFixed(2);
-  document.getElementById('stat-expense').innerText = expense.toFixed(2);
-  document.getElementById('stat-balance').innerText = (income - expense).toFixed(2);
-  document.getElementById('stat-total').innerText = records.length;
-}
-
-function render() {
-  const month = document.getElementById('month-select').value;
-  if(!month) return;
-  const filtered = records.filter(r => r.date.startsWith(month));
-  const list = document.getElementById('list');
-  
-  if(filtered.length === 0) {
-    list.innerHTML = '<div style="text-align:center; padding: 40px; color: var(--muted);">📭 本月暂无记录</div>';
+// 渲染历史记录（最近20条）
+function renderHistory() {
+  const container = document.getElementById('history-list');
+  if(!records.length) {
+    container.innerHTML = '<div class="empty-history">暂无支出记录<br>输入金额后点确认</div>';
     return;
   }
-  
-  list.innerHTML = filtered.map(r => `
-    <div class="record-item">
-      <div>
-        <div class="record-date">${r.date} · ${r.acct}</div>
-        <div class="record-desc">${escapeHtml(r.desc)}<span class="record-cat">${r.cat}</span></div>
+  const latest = records.slice(0, 30);
+  container.innerHTML = latest.map(r => `
+    <div class="history-item">
+      <div class="history-left">
+        <div class="history-desc">
+          ${escapeHtml(r.desc)}
+          <span class="history-cat">${r.cat}</span>
+        </div>
+        <div class="history-meta">${r.date} · ${r.acct}</div>
       </div>
-      <div class="${r.type==='out'?'amount-out':'amount-in'}">
-        ${r.type==='out'?'-':'+'}${r.amount.toFixed(2)}
-      </div>
+      <div class="history-amount">-${r.amount.toFixed(2)}</div>
     </div>
   `).join('');
-  updateStats();
 }
 
-function escapeHtml(str) { return str.replace(/[&<>]/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; }); }
-
-function initMonthFilter() {
-  let months = [...new Set(records.map(r => r.date.substring(0, 7)))];
-  const currMonth = new Date().toISOString().substring(0, 7);
-  if(!months.includes(currMonth)) months.unshift(currMonth);
-  if(months.length === 0) months = [currMonth];
-  const sel = document.getElementById('month-select');
-  sel.innerHTML = months.sort().reverse().map(m => `<option value="${m}">📅 ${m.replace('-',' 年 ')} 月</option>`).join('');
-  render();
+function exportExcel() {
+  if(!records.length) { showToast("暂无数据"); return; }
+  // 动态加载 xlsx 库（简单处理）
+  const script = document.createElement('script');
+  script.src = "https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js";
+  script.onload = () => {
+    const ws = XLSX.utils.json_to_sheet(records.map(r => ({
+      '日期': r.date, '金额': r.amount, '内容': r.desc, '分类': r.cat, '账户': r.acct
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "支出记录");
+    XLSX.writeFile(wb, `支出记录_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast("导出成功");
+  };
+  script.onerror = () => showToast("导出库加载失败");
+  document.head.appendChild(script);
 }
 
-function openBackupPanel() {
-  document.getElementById('backup-modal').style.display = 'flex';
-  updateBackupListDisplay();
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.innerText = msg;
+  toast.style.opacity = '1';
+  setTimeout(() => toast.style.opacity = '0', 2000);
 }
-function closeBackupPanel() { document.getElementById('backup-modal').style.display = 'none'; }
-function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2500); }
 
-// 重写 initMonthFilter 关联
-window.initMonthFilter = initMonthFilter;
-window.render = render;
-setTimeout(() => { if(typeof initMonthFilter === 'function') initMonthFilter(); }, 100);
+function escapeHtml(str) {
+  if(!str) return '';
+  return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+}
+
+// 监听输入变化
+document.getElementById('desc').addEventListener('input', () => updatePreview());
+document.getElementById('account').addEventListener('change', () => updatePreview());
+
+// 初始化
+renderCatButtons();
+setupKeyboard();
+updateDate();
+updatePreview();
 </script>
 </body>
 </html>
