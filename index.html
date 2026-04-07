@@ -323,22 +323,28 @@
     padding: 40px;
   }
 
+  /* Toast 提示 - 底部短时显示 */
   .toast {
     position: fixed;
-    bottom: 100px;
+    bottom: 80px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(100px);
     background: #1c1c1e;
     color: white;
     padding: 6px 16px;
     border-radius: 30px;
     font-size: 12px;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: all 0.2s ease;
     pointer-events: none;
-    z-index: 999;
+    z-index: 1000;
     white-space: nowrap;
   }
+  .toast.show {
+    opacity: 0.9;
+    transform: translateX(-50%) translateY(0);
+  }
+
   .hidden-date-input {
     position: absolute;
     opacity: 0;
@@ -440,7 +446,7 @@
 <input type="date" id="hiddenDatePicker" class="hidden-date-input">
 
 <script>
-  // 分类配置（医疗换成日用）
+  // 分类配置（日用）
   const CATEGORIES = [
     { name: "餐饮", icon: "🍜" }, { name: "交通", icon: "🚗" },
     { name: "购物", icon: "🛒" }, { name: "娱乐", icon: "🎬" },
@@ -448,7 +454,7 @@
     { name: "日用", icon: "🧴" }, { name: "其他", icon: "📦" }
   ];
 
-  // 账户配置（微信/支付宝 换成微信logo）
+  // 账户配置（微信logo）
   const ACCOUNTS = [
     { name: "现金", icon: "💵" },
     { name: "信用卡", icon: "💳" },
@@ -464,8 +470,22 @@
   let currentDate = new Date();
 
   // 汇总页状态
-  let summaryType = "month";    // day / month
-  let summaryGroup = "account"; // category / account
+  let summaryType = "month";
+  let summaryGroup = "account";
+
+  // Toast 定时器
+  let toastTimer = null;
+
+  // 显示提示（底部，1秒后消失）
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    if (toastTimer) clearTimeout(toastTimer);
+    toast.innerText = msg;
+    toast.classList.add('show');
+    toastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 1000);
+  }
 
   // 注册 Service Worker
   if ('serviceWorker' in navigator) {
@@ -493,7 +513,6 @@
     const summaryPage = document.getElementById('summaryPage');
     mainPage.classList.remove('slide-out');
     summaryPage.classList.remove('slide-in');
-    // 刷新汇总数据（如果从汇总返回，不需要刷新）
   }
 
   function showSummaryPage() {
@@ -525,7 +544,6 @@
     };
   }
 
-  // 获取所有记录（供汇总使用）
   function getAllRecords() {
     return records;
   }
@@ -632,12 +650,12 @@
       document.getElementById('purposeInput').value = '';
       currentAmount = "0";
       document.getElementById('amountDisplay').innerText = "0.00";
-      showToast(`支出 ${amount.toFixed(2)}`);
+      showToast(`¥${amount.toFixed(2)}`);
       performAutoBackup();
     };
   }
 
-  // 自动备份
+  // 自动备份（不弹出额外提示，静默下载）
   function performAutoBackup() {
     if (!records.length) return;
     try {
@@ -661,9 +679,12 @@
     } catch(e) { console.warn(e); }
   }
 
-  function manualBackup() { performAutoBackup(); showToast("备份完成"); }
+  function manualBackup() { 
+    performAutoBackup(); 
+    showToast("备份完成"); 
+  }
 
-  // ========== 汇总功能 ==========
+  // 汇总功能
   function refreshSummary() {
     const allRecords = getAllRecords();
     if (!allRecords.length) {
@@ -675,15 +696,13 @@
     let today = new Date();
     
     if (summaryType === 'day') {
-      // 按日期分组（最近7天）
       const last7Days = [];
       for (let i = 0; i < 7; i++) {
         const d = new Date();
         d.setDate(today.getDate() - i);
         const dateKey = d.toISOString().split('T')[0];
-        last7Days.push(dateKey);
+        last7Days.unshift(dateKey);
       }
-      last7Days.reverse();
       
       last7Days.forEach(date => { groupedData[date] = 0; });
       
@@ -700,7 +719,6 @@
       document.getElementById('summaryTable').innerHTML = html;
       
     } else if (summaryType === 'month') {
-      // 按月分组（最近6个月）
       const last6Months = [];
       for (let i = 0; i < 6; i++) {
         const d = new Date();
@@ -726,7 +744,7 @@
       document.getElementById('summaryTable').innerHTML = html;
     }
     
-    // 如果选择按分类/账户汇总，重新组织数据
+    // 按分类或账户重新汇总
     if (summaryGroup === 'category') {
       const categoryMap = {};
       CATEGORIES.forEach(cat => { categoryMap[cat.name] = 0; });
@@ -790,14 +808,7 @@
     updateDateBtn();
   }
 
-  function showToast(msg) {
-    const toast = document.getElementById('toast');
-    toast.innerText = msg;
-    toast.style.opacity = '1';
-    setTimeout(() => toast.style.opacity = '0', 2000);
-  }
-
-  // 初始化汇总页按钮事件
+  // 初始化汇总页按钮
   function initSummaryButtons() {
     document.querySelectorAll('.filter-btn[data-type]').forEach(btn => {
       btn.addEventListener('click', () => {
