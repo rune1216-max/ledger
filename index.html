@@ -238,28 +238,56 @@ async function syncToGitHub() {
   const url = `https://api.github.com/repos/${repo}/contents/data.json`;
   try {
     showToast('⏳ 同步中...', '');
-    const getRes = await fetch(url, { headers: {'Authorization': `token ${token}`, 'Cache-Control': 'no-cache'} });
+
+    // 第一步：尝试获取现有文件的 sha
+    const getRes = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Cache-Control': 'no-cache'
+      }
+    });
+
     let sha = "";
     if (getRes.ok) {
       const fileData = await getRes.json();
       sha = fileData.sha;
+    } else if (getRes.status !== 404) {
+      // 404 表示文件不存在（首次同步），其他错误才报警
+      const errData = await getRes.json().catch(() => ({}));
+      showToast('❌ 读取失败 ' + getRes.status + '：' + (errData.message || ''), 'error');
+      return;
     }
 
+    // 第二步：写入文件
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(records))));
+    const body = {
+      message: `Sync ${new Date().toLocaleString()}`,
+      content: content,
+    };
+    if (sha) body.sha = sha;
+
     const putRes = await fetch(url, {
       method: 'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: `Sync ${new Date().toLocaleString()}`,
-        content: content,
-        sha: sha || undefined
-      })
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
     });
-    if(putRes.ok) showToast('✅ 同步成功', 'success');
-    else showToast('❌ 同步失败：' + putRes.status, 'error');
-  } catch(e) { 
-    showToast('❌ 同步失败，请检查网络', 'error');
-    console.error(e); 
+
+    if (putRes.ok) {
+      showToast('✅ 同步成功', 'success');
+    } else {
+      const errData = await putRes.json().catch(() => ({}));
+      showToast('❌ 写入失败 ' + putRes.status + '：' + (errData.message || ''), 'error');
+    }
+  } catch(e) {
+    showToast('❌ 网络错误：' + e.message, 'error');
+    console.error(e);
   }
 }
 
@@ -271,7 +299,12 @@ async function restoreFromGH() {
 
   try {
     const res = await fetch(`https://api.github.com/repos/${repo}/contents/data.json`, {
-      headers: {'Authorization': `token ${token}`, 'Cache-Control': 'no-cache'}
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Cache-Control': 'no-cache'
+      }
     });
     if(res.ok) {
       const data = await res.json();
@@ -283,9 +316,10 @@ async function restoreFromGH() {
       cloudData.forEach(r => store.add(r));
       tx.oncomplete = () => location.reload();
     } else {
-      alert("云端尚无备份文件");
+      const errData = await res.json().catch(() => ({}));
+      alert("恢复失败 " + res.status + "：" + (errData.message || '云端尚无备份文件'));
     }
-  } catch(e) { alert("恢复失败，请检查网络"); }
+  } catch(e) { alert("恢复失败，请检查网络：" + e.message); }
 }
 
 function toggleGHModal() {
