@@ -259,15 +259,46 @@
   }
 
   function importBackup() {
-    const data = localStorage.getItem('ledger_backup');
-    if(!data) return showToast("未找到备份");
-    if(confirm("恢复历史记录？")) {
-      const tx = db.transaction("records","readwrite");
-      const store = tx.objectStore("records");
-      store.clear();
-      JSON.parse(data).forEach(r => store.add(r));
-      tx.oncomplete = () => location.reload();
-    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        const text = evt.target.result.replace(/^\uFEFF/, ''); // strip BOM
+        const lines = text.trim().split('\n').slice(1); // skip header
+        const parsed = [];
+        for (const line of lines) {
+          // handle quoted fields
+          const cols = [];
+          let cur = '', inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            if (line[i] === '"') { inQ = !inQ; }
+            else if (line[i] === ',' && !inQ) { cols.push(cur); cur = ''; }
+            else { cur += line[i]; }
+          }
+          cols.push(cur);
+          if (cols.length < 5) continue;
+          const [date, cat, acc, desc, amt] = cols;
+          if (!date || isNaN(parseFloat(amt))) continue;
+          parsed.push({ id: Date.now() + Math.random(), date: date.trim(), cat: cat.trim(), acc: acc.trim(), desc: desc.trim(), amt: parseFloat(amt) });
+        }
+        if (!parsed.length) return showToast("CSV 无有效数据");
+        if (!confirm(`导入 ${parsed.length} 条记录？现有数据将被清空。`)) return;
+        const tx = db.transaction("records", "readwrite");
+        const store = tx.objectStore("records");
+        store.clear();
+        parsed.forEach(r => store.add(r));
+        tx.oncomplete = () => {
+          localStorage.setItem('ledger_backup', JSON.stringify(parsed));
+          location.reload();
+        };
+      };
+      reader.readAsText(file, 'utf-8');
+    };
+    input.click();
   }
 
   // ── 流水明细 ──────────────────────────────────────────
